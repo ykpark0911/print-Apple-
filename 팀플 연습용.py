@@ -65,3 +65,4 @@ for i in range(0, len(video_ids), 50):  # 50개씩 나눠서 요청
 # ▶ 결과 출력
 total_time = timedelta(seconds=total_seconds)
 print(f'📊 최대 추정 시청 시간: {total_time} (약 {total_time.total_seconds() / 3600:.2f}시간)')
+#커밋
