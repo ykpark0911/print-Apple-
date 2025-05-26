@@ -12,7 +12,7 @@ def file_load():
     print("인증 완료")
 
     # takeout 파일 경로
-    path = "C:\\pypy\\YTA-file\\YTA\\open_file\\Takeout\\YouTube 및 YouTube Music\\시청 기록\\시청 기록2006.json"
+    path = "C:\\pypy\\print-Apple-\\YTA\\open_file\\Takeout\\YouTube 및 YouTube Music\\시청 기록\\시청 기록2006.json"
 
     # json 파일 리스트로 변환
     video_list= load_json(path)

@@ -1,5 +1,5 @@
 # 그래프 그리기
-import matplotlib.pyplot as plt # 그래프 그릴 수 있게 해주는 라이브러리
+import matplotlib.pyplot as plt # 그래프 그릴 수 있게 해주는 라이브러리 #pip install matplotlib
 from open_file.json_loader import load_json # takeout 파일 여는 함수
 from video_statistics import get_top_channel, get_hour_distribution, get_date_distribution # 영상 통계내는 함수
 from grape import plot_hour_distribution, plot_date_distribution, draw_pie_chart # 그래프 만드는 함수
@@ -8,7 +8,7 @@ from filter import not_short_filter # 쇼츠 영상 제외 시키는 필터 함�
 
 def grape_load():
     # takeout 파일 경로
-    path = "C:\\pypy\\YTA-file\\YTA\\open_file\\Takeout\\YouTube 및 YouTube Music\\시청 기록\\시청 기록2006.json"
+    path = "C:\\pypy\\print-Apple-\\YTA\\open_file\\Takeout\\YouTube 및 YouTube Music\\시청 기록\\시청 기록2006.json"
 
     # json 파일 리스트로 변환
     video_list= load_json(path)

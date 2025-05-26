@@ -9,7 +9,7 @@ SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"] # 읽기 전용 �
 def get_authenticated_service():
     # OAuth 흐름 초기화 (client_secret.json 파일과 요청 권한 설정)
     flow = InstalledAppFlow.from_client_secrets_file(
-        "C:\\pypy\\YTA-file\\YTA\\yt_api\\client_secret_693447563027-1qjb80j8h2uj0phs3cvqfjcnb8tsat4m.apps.googleusercontent.com.json", SCOPES
+        "C:\\pypy\\print-Apple-\\YTA\\yt_api\\client_secret_693447563027-1qjb80j8h2uj0phs3cvqfjcnb8tsat4m.apps.googleusercontent.com.json", SCOPES
     )
 
     # 사용자 브라우저 열기 → 로그인 + 권한 허용 → 인증 정보 받기
