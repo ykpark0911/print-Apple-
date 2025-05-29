@@ -2,13 +2,15 @@
 from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
 from open_file.json_loader import load_json # takeout 파일 여는 함수
 from yt_api.get_video_info import get_video_info, for_time_get_short_count, get_error_count #영상 정보 호출하는 함수
-from yt_api.get_yt_ob import oauth_service # 유튜브 객체 만드는 함수
+from yt_api.get_yt_ob import oauth_login # 유튜브 객체 만드는 함수
 from filter import not_short_filter # 쇼츠 영상 제외 시키는 필터 함수 
+
+
 
 
 def file_load():
     # 유튜브 객체 생성
-    youtube = oauth_service()
+    youtube = oauth_login()
     print("인증 완료")
 
     # takeout 파일 경로
