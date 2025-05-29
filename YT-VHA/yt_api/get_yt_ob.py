@@ -6,7 +6,7 @@ from googleapiclient.discovery import build             # API 요청을 위한 �
 # SCOPES = 사용자의 YouTube 데이터 접근 권한 요청 범위
 SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"] # 읽기 전용 권한
 
-def get_authenticated_service():
+def oauth_service():
     # OAuth 흐름 초기화 (client_secret.json 파일과 요청 권한 설정)
     flow = InstalledAppFlow.from_client_secrets_file(
         "C:\\pypy\\print-Apple-\\YT-VHA\\yt_api\\client_secret_693447563027-1qjb80j8h2uj0phs3cvqfjcnb8tsat4m.apps.googleusercontent.com.json", SCOPES
@@ -19,3 +19,10 @@ def get_authenticated_service():
     youtube = build("youtube", "v3", credentials=credentials)
 
     return youtube  # 인증된 YouTube 객체 반환
+
+
+
+def api_key(API_KEY):
+    youtube = build("youtube", "v3", developerKey=API_KEY)
+
+    return youtube
