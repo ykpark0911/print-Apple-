@@ -2,7 +2,6 @@
 
 import isodate
 from dateutil import parser #pip install python-dateutil
-from main3 import sub_load
 
 
 # 카테고리 번호를 통해 카테고리 얻는 함수
@@ -60,11 +59,9 @@ def is_short(item):
 
 # 구독한 채널의 영상인지 판별하는 함수
 # item: 응답 받은 영상의 정보(dict)
-def is_sub(item):
+def is_sub(item, sub_list):
     # 구독자 목록 불러오기
-    sub_list = sub_load()
-
-    if item['channel'] in sub_list:
+    if item["snippet"]["channelTitle"] in sub_list:
         return "sub"
     else:
         return "notSub"

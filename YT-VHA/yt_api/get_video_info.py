@@ -7,7 +7,7 @@ from tool import duration_iso8601_to_seconds, dateTime_iso8601_to_dateTime, get_
 # youtube: 유튜브 객체
 # video_ids: 호출할 영상 id 목록(list)
 # takeout: takeout 파일(리스트)
-def get_video_info(youtube, video_ids, takeout):
+def get_video_info(youtube, video_ids, takeout, sub_list):
     # 추가로 영상 시간을 통해 걸러진 쇼츠 영상 개수, 오류 영상 개수
     global short_count, error_count
     short_count, error_count = 0, 0
@@ -58,12 +58,9 @@ def get_video_info(youtube, video_ids, takeout):
             "items": [
                 {
                 "kind": "youtube#video",
-                "id": "abc123",
-                "snippet": {
-                    "title": "파이썬 강의",
-                    "channelTitle": "코딩하는 정대리“
-	                “categoryId”: 10
-                    }
+                .
+                .
+                .
                 },
 
                 {
@@ -77,7 +74,37 @@ def get_video_info(youtube, video_ids, takeout):
 
         # 응답 받은 영상 정보를 딕셔너리{id1 : item1, id2 : item2,...}형태로 저장
         response_dict = {}
-        # item: 응답 받은 영상의 정보(dict)를 꺼냄 예) {"kind": "youtube#video", "id": "abc123", "snippet": {"title": "파이썬 강의","channelTitle": "코딩하는 정대리““category”: "Music"}}
+        # item: 응답 받은 영상의 정보(dict)를 꺼냄 예)
+        '''
+        {
+            "kind": "youtube#video",
+            "id": "abc123",
+            "snippet": {
+                "title": "파이썬 강의",
+                "channelTitle": "코딩하는 정대리",
+                "categoryId": "10",
+                "publishedAt": "2023-03-20T12:00:00Z",
+                "thumbnails": {
+                    "default": {
+                    "url": "https://i.ytimg.com/vi/abc123/default.jpg",
+                    "width": 120,
+                    "height": 90
+                    },
+                    "high": {
+                    "url": "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
+                    "width": 480,
+                    "height": 360
+                    }
+                }
+            },
+            "contentDetails": {
+                "duration": "PT5M12S",
+                "dimension": "2d",
+                "definition": "hd"
+            }
+        }
+        '''
+        
         for item in response["items"]:
             response_dict[item["id"]] = item
 
@@ -110,7 +137,7 @@ def get_video_info(youtube, video_ids, takeout):
                 "id": info["id"],
                 "title": info["snippet"]["title"],
                 "category": get_categoryId(info["snippet"].get("categoryId", "0")),
-                "sub" : is_sub(info),
+                "sub" : is_sub(info, sub_list),
                 "channel": info["snippet"]["channelTitle"],
                 "thumbnails": info['snippet']['thumbnails']['high'],
                 "durationSec": duration_iso8601_to_seconds(info["contentDetails"]["duration"]),

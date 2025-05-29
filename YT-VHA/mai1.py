@@ -2,19 +2,21 @@
 from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
 from open_file.json_loader import load_json # takeout 파일 여는 함수
 from yt_api.get_video_info import get_video_info, for_time_get_short_count, get_error_count #영상 정보 호출하는 함수
-from yt_api.get_yt_ob import oauth_login # 유튜브 객체 만드는 함수
+from yt_api.get_yt_ob import tester_login # 유튜브 객체 만드는 함수
 from filter import not_short_filter # 쇼츠 영상 제외 시키는 필터 함수 
-
+from open_file.get_sub_list import get_sub_list
 
 
 
 def file_load():
     # 유튜브 객체 생성
-    youtube = oauth_login()
+    youtube = tester_login()
     print("인증 완료")
 
     # takeout 파일 경로
     path = "C:\\pypy\\print-Apple-\\YT-VHA\\open_file\\Takeout\\YouTube 및 YouTube Music\\시청 기록\\시청 기록2006.json"
+    path2 = "C:\\pypy\\print-Apple-\\YT-VHA\\open_file\\Takeout\\YouTube 및 YouTube Music\\구독정보\\구독정보.csv"
+    sub_list = get_sub_list(path2)
 
     # json 파일 리스트로 변환
     video_list= load_json(path)
@@ -33,20 +35,22 @@ def file_load():
     print("아이디 추출 완료")
 
     # 영상 정보 호출
-    video_info_list= get_video_info(youtube, video_ids, not_short_video_list)
+    video_info_list= get_video_info(youtube, video_ids, not_short_video_list, sub_list)
     print("영상 정보 호출 완료")
 
 
     total_not_short_video2 = len(not_short_video_list) # 쇼츠 제외 영상 개수
     total_short_video2 = total_short_video + for_time_get_short_count() # 쇼츠 영상 개수
-    error_video = get_error_count() # 에러 영상 개수
+    total_error_video = get_error_count() # 에러 영상 개수
 
-    print(video_info_list)
+    #print(video_info_list)
 
     print(f"불러온 영상: {total_watch_video}, 시간 차로 뽑아낸 쇼츠 영상: {total_short_video}")
     print(f"추정 쇼츠 제외 영상: {total_not_short_video2}, 총 추청 쇼츠 영상: {total_short_video2}")
-    print(f"오류 영상: {error_video}")
+    print(f"오류 영상: {total_error_video}")
 
+
+file_load()
 
 '''
 영상 정보 호출 완료
