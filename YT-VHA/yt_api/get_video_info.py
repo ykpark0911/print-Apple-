@@ -142,7 +142,8 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
                 "thumbnails": info['snippet']['thumbnails']['high'],
                 "durationSec": duration_iso8601_to_seconds(info["contentDetails"]["duration"]),
                 "dateTime":  dateTime_iso8601_to_dateTime(chunk_list[j]["time"]),
-                "platform" : chunk_list[j]["header"]
+                "platform" : chunk_list[j]["header"],
+                "video_url" : chunk_list[j]["titleUrl"]
             }
             # video_info_list에 추가
             video_info_list.append(video_info)

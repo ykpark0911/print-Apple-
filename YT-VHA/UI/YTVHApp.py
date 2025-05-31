@@ -7,7 +7,7 @@ from open_file.get_sub_list import get_sub_list
 from open_file.json_loader import load_json # takeout 파일 여는 함수
 from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 함수
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
-from filter import not_short_filter # 쇼츠 영상 제외 시키는 필터 함수 
+from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
 from save_file.save_statistics import save_statistics_to_file
 from grape import make_grapes, empty_grape
@@ -87,6 +87,8 @@ class YTVHApp(tk.Tk):
         save_statistics_to_file(self.statistics, save_file_path)
         print("저장됨")
 
+    def apply_filter(self, filter, option):
+        self.filtered_video_info_list = filter(self.video_info_list, option)
 
     def guest_user_login(self):
         self.youtube = guest_login()
@@ -204,7 +206,8 @@ class YTVHApp(tk.Tk):
     def create_run_page2(self):
         frame = tk.Frame(self)
         tk.Label(frame, text=f"영상 기록 모아보기", font=("Arial", 20)).pack(pady=100)
-        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack()
+        # 🔙 뒤로가기
+        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
 
         return frame
     

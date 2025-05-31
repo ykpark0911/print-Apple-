@@ -32,16 +32,13 @@ def not_short_filter(takeout):
 
 # 유튜브 뮤직에서 본 영상과 유튜브에서 본 영상 분류하는 함수
 # video_info_list: 응답 받은 정보 있는 파일(리스트)
-def music_and_not_music_filter(video_info_list):
-    music_video_info_list = []
-    not_music_video_info_list = []
+def music_and_not_music_filter(video_info_list, platform):
+    filtered_viedio_info_list = []
     for item in range(video_info_list):
-        if item["platform"] == "YouTube Music":
-            music_video_info_list.append(item)
-        else :
-            not_music_video_info_list.append(item)
+        if item["platform"] == platform:
+            filtered_viedio_info_list.append(item)
     
-    return music_video_info_list, not_music_video_info_list
+    return filtered_viedio_info_list
 
 
 # 선택한 카테고리에 해당하는 영상을 뽑아내는 필터 함수

@@ -1,3 +1,3 @@
-from UI.YTVHApp import YTVHApp_UI
+from UI.YTVHApp2 import YTVHApp_UI
 
 YTVHApp_UI()
