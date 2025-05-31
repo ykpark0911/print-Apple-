@@ -5,6 +5,20 @@ from tool import dateTime_iso8601_to_dateTime
 from datetime import timezone, timedelta
 
 
+
+def get_shorts_distribution(takeout, not_short_takeout):
+    total_takeout = len(takeout)
+    total_not_short_takeout = len(not_short_takeout)
+
+    takeout_shorts_distribution_dict = {
+        "total_takeout" : total_takeout,
+        "total_sohrts_takeout" : total_not_short_takeout,
+        "shorts_percentage" : (total_not_short_takeout/total_takeout) * 100
+    }
+
+    return takeout_shorts_distribution_dict
+
+
 # 좋아요 가장 많이 누른 채널 (상위 num개) 뽑아내는 함수
 # like_list: 좋아요 재생목록의 영상 정보담긴 파일(리스트)
 # num: 뽑아낼 채널 개수(int)
@@ -35,7 +49,7 @@ def get_top_channel(takeout, num):
     top_channels = channel_count.most_common(num)
     
 
-    return top_channels (체널이름 : 4, 체널이름 : 4, 체널이름 : 4)
+    return top_channels
 
 
 # 시간별 영상 시청 개수 새는 함수
@@ -112,8 +126,8 @@ def get_date_distribution(takeout, group_by, average):
             group_counts = average_group_counts
         
     group_date_dict= {
-        group_by + "dates": group_dates,
-        "counts": group_counts
+        group_by + "_dates": group_dates,
+        "_counts": group_counts
     }
     
     return group_date_dict
@@ -145,49 +159,20 @@ def get_category_distribution(video_info_list):
     return category_distribution_dict
 
 
-def make_takeout_statistics(takeout):
-    statistics = []
-
-    top_channel_dict= get_top_channel(takeout, 10)
-
-    hour_distribution_dict = get_hour_distribution(takeout)
-    day_date_distribution_dict = get_date_distribution(takeout, "day", False)
-    week_date_distribution_dict = get_date_distribution(takeout, "week", False)
-    month_date_distribution_dict = get_date_distribution(takeout, "month", False)
-    average_week_date_distribution_dict = get_date_distribution(takeout, "week", True)
-    average_month_date_distribution_dict = get_date_distribution(takeout, "month", True)
-    weekDay_date_distribution_dict = get_date_distribution(takeout, "weekDay", False)
-
-
+def make_statistics(takeout, not_short_takeout, video_info_list, like_list):
     statistics = {
-    "top_channel": top_channel_dict,
-    "hour_distribution": hour_distribution_dict,
-    "day_date_distribution": day_date_distribution_dict,
-    "week_date_distribution": week_date_distribution_dict,
-    "month_date_distribution": month_date_distribution_dict,
-    "average_week_date_distribution": average_week_date_distribution_dict,
-    "average_month_date_distribution": average_month_date_distribution_dict,
-    "weekDay_date_distribution": weekDay_date_distribution_dict,
+    "shorts_distribution" : get_shorts_distribution(takeout, not_short_takeout),
+    "top_liked_channe" : get_top_liked_channel(like_list, 10),
+    "top_channel": get_hour_distribution(takeout),
+    "hour_distribution": get_date_distribution(takeout, "day", False),
+    "day_date_distribution": get_date_distribution(takeout, "week", False),
+    "week_date_distribution": get_date_distribution(takeout, "month", False),
+    "month_date_distribution": get_date_distribution(takeout, "week", True),
+    "average_week_date_distribution": get_date_distribution(takeout, "month", True),
+    "average_month_date_distribution": get_date_distribution(takeout, "weekDay", False),
+    "weekDay_date_distribution": get_category_distribution(video_info_list),
+    "category_distribution":  get_category_distribution(video_info_list),
+    
     }
-    
-    return statistics
-
-
-def make_video_info_list_statistics(video_info_list):
-    statistics = []
-
-    category_distribution_dict = get_category_distribution(video_info_list)
-
-    statistics.append(category_distribution_dict)
-    
-    return statistics
-
-
-def make_like_list_statistics(like_list):
-    statistics = []
-
-    top_liked_channel = get_top_liked_channel(like_list, 10)
-
-    statistics.append(top_liked_channel)
     
     return statistics

@@ -4,7 +4,7 @@ from tool import is_short, duration_iso8601_to_seconds, get_categoryId
 
 # 좋아요 한 영상의 정보를 불러오는 함수
 # youtube: 유튜브 객체
-def extract_video_info_from_like_playlist(youtube):
+def extract_video_info_from_liked_playlist(youtube):
     # 호출한 좋아요 영상 정보를 담는 리스트
     like_video_info_list = []
 
