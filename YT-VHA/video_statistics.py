@@ -6,14 +6,16 @@ from datetime import timezone, timedelta
 
 
 
-def get_shorts_distribution(takeout, not_short_takeout):
+def get_shorts_distribution(takeout, not_shorts_takeout):
     total_takeout = len(takeout)
-    total_not_short_takeout = len(not_short_takeout)
+    total_not_shorts_takeout = len(not_shorts_takeout)
+
+    shorts_percentage = round(100 - (total_not_shorts_takeout/total_takeout) * 100)
 
     takeout_shorts_distribution_dict = {
         "total_takeout" : total_takeout,
-        "total_sohrts_takeout" : total_not_short_takeout,
-        "shorts_percentage" : (total_not_short_takeout/total_takeout) * 100
+        "total_not_shorts_takeout" : total_not_shorts_takeout,
+        "shorts_percentage" : shorts_percentage
     }
 
     return takeout_shorts_distribution_dict
@@ -77,7 +79,7 @@ def get_hour_distribution(takeout):
 # 날짜별 영상 시청 개수 새는 함수
 # group_by: "day"(하루), "week"(주), "month"(달), "weekDay"(요일)로 분류 가능
 # average: 하루 평균으로 구할 것인지(bool)
-def get_date_distribution(takeout, group_by, average):
+def get_date_distribution(takeout, group_by, average=False):
     group_date_list = [] #선택한 데이터 종류 저장 받는 곳
     dates_list = defaultdict(set)  # 시청한 날짜를 datetime 형태로 저장받는 곳
     
@@ -116,7 +118,7 @@ def get_date_distribution(takeout, group_by, average):
         group_counts.append(i[1])
     
 
-    if group_by == "week" or group_by == "month" and average == True:
+    if average and group_by in ("week", "month"):
         group_by = "average_" + group_by
         average_group_counts = []
         for j in group_dates:
@@ -127,7 +129,7 @@ def get_date_distribution(takeout, group_by, average):
         
     group_date_dict= {
         group_by + "_dates": group_dates,
-        "_counts": group_counts
+        "counts": group_counts
     }
     
     return group_date_dict
@@ -161,18 +163,38 @@ def get_category_distribution(video_info_list):
 
 def make_statistics(takeout, not_short_takeout, video_info_list, like_list):
     statistics = {
-    "shorts_distribution" : get_shorts_distribution(takeout, not_short_takeout),
-    "top_liked_channe" : get_top_liked_channel(like_list, 10),
-    "top_channel": get_hour_distribution(takeout),
-    "hour_distribution": get_date_distribution(takeout, "day", False),
-    "day_date_distribution": get_date_distribution(takeout, "week", False),
-    "week_date_distribution": get_date_distribution(takeout, "month", False),
-    "month_date_distribution": get_date_distribution(takeout, "week", True),
-    "average_week_date_distribution": get_date_distribution(takeout, "month", True),
-    "average_month_date_distribution": get_date_distribution(takeout, "weekDay", False),
-    "weekDay_date_distribution": get_category_distribution(video_info_list),
-    "category_distribution":  get_category_distribution(video_info_list),
-    
+        "top_liked_channe" : get_top_liked_channel(like_list, 10),
+        "top_channel": get_top_channel(takeout, 10),
+        "shorts_distribution" : get_shorts_distribution(takeout, not_short_takeout),
+        "hour_distribution": {
+            "include_shorts": get_hour_distribution(takeout),
+            "not_shorts": get_hour_distribution(not_short_takeout)
+        },
+        "day_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "day"),
+            "not_shorts": get_date_distribution(not_short_takeout, "day")
+        },
+        "week_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "week"),
+            "not_shorts": get_date_distribution(not_short_takeout, "week")
+        },
+        "month_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "month"),
+            "not_shorts": get_date_distribution(not_short_takeout, "month")
+        },
+        "average_week_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "week", True),
+            "not_shorts": get_date_distribution(not_short_takeout, "week", True)
+        },
+        "average_month_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "month", True),
+            "not_shorts": get_date_distribution(not_short_takeout, "month", True)
+        },
+        "weekDay_date_distribution": {
+            "include_shorts": get_date_distribution(takeout, "weekDay", False),
+            "not_shorts": get_date_distribution(not_short_takeout, "weekDay", False),
+        },
+        "category_distribution": get_category_distribution(video_info_list),
     }
     
     return statistics

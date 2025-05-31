@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 import webbrowser
 from yt_api.get_yt_ob import tester_login, guest_login
 from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
@@ -9,6 +9,9 @@ from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 �
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import not_short_filter # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
+from save_file.save_statistics import save_statistics_to_file
+from grape import make_grapes, empty_grape
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 
@@ -54,7 +57,21 @@ class YTVHApp(tk.Tk):
 
         self.current_frame_index = index
         self.current_page = page
+    
+    # name은 "shorts_distribution" 등 ...
+    def show_grape(self, grape_sort, frame, include_short_or_not_key=False):
+        if include_short_or_not_key:
+            grape = self.grapes[grape_sort][include_short_or_not_key]
+        else:
+            grape = self.grapes[grape_sort]
+        
+        if hasattr(self, "canvas"):
+            self.canvas.get_tk_widget().destroy()
 
+        self.canvas = FigureCanvasTkAgg(grape, master=frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
 
     def next_page(self):
         if self.current_frame_index < len(self.pages[self.current_page].values()) - 1:
@@ -62,7 +79,13 @@ class YTVHApp(tk.Tk):
             self.show_page(self.current_page, self.current_frame_index)
     
     def save_action(self):
-        print("🔸 저장하기 버튼 클릭됨")
+        save_file_path = asksaveasfilename(
+            defaultextension = ".txt",  # 기본 확장자
+            filetypes = [("JSON files", "*.json"), ("All files", "*.*")],
+            title = "저장할 위치 선택"
+            )
+        save_statistics_to_file(self.statistics, save_file_path)
+        print("저장됨")
 
 
     def guest_user_login(self):
@@ -109,10 +132,12 @@ class YTVHApp(tk.Tk):
         self.liked_video_info_list = extract_video_info_from_liked_playlist(self.youtube)
 
         # 통계 자료 얻기
-        self.statistics_dict = make_statistics(self.takeout, self.not_shorts_takeout, self.video_info_list, self.liked_video_info_list)
+        self.statistics = make_statistics(self.takeout, self.not_shorts_takeout, self.video_info_list, self.liked_video_info_list)
+
+        # 그래프 얻기
+        self.grapes = make_grapes(self.statistics)
 
         # 디버깅 용
-        print(self.statistics_dict)
         print(f"불러온 영상: {len(self.video_info_list)}")
         print(f"총 추청 쇼츠 영상: {len(self.takeout) - len(self.video_info_list)}")
 
@@ -149,25 +174,31 @@ class YTVHApp(tk.Tk):
 
     def create_run_page0(self):
         frame = tk.Frame(self)
-        tk.Label(frame, text="✅ 프로그램 실행창!", font=("Arial", 20), fg="green").pack(pady=100)
+        tk.Label(frame, text="✅ 프로그램 실행창!", font=("Arial", 16), fg="green").pack(pady=10)
 
         # 오른쪽 위 저장 버튼
-        tk.Button(frame, text="💾 저장하기", command=self.save_action).place(x=500, y=10)
+        tk.Button(frame, text="💾 저장하기", command=self.save_action).pack(side="right", padx=10, pady=10)
         # 중앙 버튼들
-        tk.Button(frame, text="1. 통계 보기", width=30, height=2,
-                  command=lambda: self.show_page(self.current_page, 1)).pack(pady=30)
-        tk.Button(frame, text="2. 좋아요 영상 보기", width=30, height=2,
+        tk.Button(frame, text="1. 통계 보기", width=20, height=2,
+                  command=lambda: self.show_page(self.current_page, 1)).pack(pady=10)
+        tk.Button(frame, text="2. 좋아요 영상 보기", width=20, height=2,
                   command=lambda: self.show_page(self.current_page, 2)).pack(pady=10)
-        tk.Button(frame, text="3. 일반 영상 보기", width=30, height=2,
+        tk.Button(frame, text="3. 일반 영상 보기", width=20, height=2,
                   command=lambda: self.show_page(self.current_page, 3)).pack(pady=10)
 
         return frame
     
     def create_run_page1(self):
         frame = tk.Frame(self)
+        self.canvas = FigureCanvasTkAgg(empty_grape, master = frame)
         tk.Label(frame, text=f"통계창", font=("Arial", 20)).pack(pady=100)
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack()
-
+        tk.Button(frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", frame)).pack()
+        tk.Button(frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", frame)).pack()
+        tk.Button(frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", frame, "not_shorts")).pack()
+        tk.Button(frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", frame, "not_shorts")).pack()
+        tk.Button(frame, text="날짜별 영상 개수: 달", command=lambda: self.show_grape("month_date_distribution", frame, "not_shorts")).pack()
+        tk.Button(frame, text="날짜별 영상 개수: 요일", command=lambda: self.show_grape("weekDay_date_distribution", frame, "not_shorts")).pack()
         return frame
     
     def create_run_page2(self):
@@ -185,6 +216,6 @@ class YTVHApp(tk.Tk):
         return frame
 
 
-def start_UI():
+def YTVHApp_UI():
     app = YTVHApp()
     app.mainloop()

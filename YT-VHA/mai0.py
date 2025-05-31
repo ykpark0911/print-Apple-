@@ -47,5 +47,3 @@ def grape_load():
 
 
 grape_load()
-
-

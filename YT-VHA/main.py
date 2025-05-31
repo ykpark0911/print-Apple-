@@ -1,3 +1,3 @@
-from UI.start_page import start_UI
+from UI.YTVHApp import YTVHApp_UI
 
-start_UI()
+YTVHApp_UI()
