@@ -25,6 +25,18 @@ class YTVHApp(tk.Tk):
         self.geometry("800x600")
         self.video_info_list = []
 
+        self.subscribed_only_var = tk.BooleanVar(value=False) # 1. 구독 채널만 보기 (체크박스)
+        self.selected_date_entry = None # 2. 선택 날짜 (입력 필드)
+        self.selected_channel_entry = None # 3. 선택 채널 (입력 필드)
+        self.selected_category_var = tk.StringVar(value="none") # 4. 카테고리 (라디오 버튼)
+        self.selected_platform_var = tk.StringVar(value="YouTube") # 5. 플랫폼 (라디오 버튼, 기본값 YouTube)
+
+        # 영상 보여주기 페이지 초기
+        self.current_video_page = 0    # 현재 비디오 페이지 (0부터 시작)
+        self.videos_per_page = 5       # 한 페이지에 보여줄 영상 개수
+        self.total_filtered_videos = [] # 현재 필터링된 전체 영상 목록 (페이지네이션 대상)
+        self.placeholder_img = ImageTk.PhotoImage(Image.new("RGB", (120, 90), color = 'gray'))
+
         # 프레임 구성
         start_page_frames = {
             0 : self.create_start_frame0(),
@@ -50,12 +62,6 @@ class YTVHApp(tk.Tk):
         self.current_page = "start"
         self.show_page("start", 0)
 
-        # 영상 보여주기 페이지 초기
-        self.current_video_page = 0    # 현재 비디오 페이지 (0부터 시작)
-        self.videos_per_page = 5       # 한 페이지에 보여줄 영상 개수
-        self.total_filtered_videos = [] # 현재 필터링된 전체 영상 목록 (페이지네이션 대상)
-        self.placeholder_img = ImageTk.PhotoImage(Image.new("RGB", (120, 90), color = 'gray'))
-
     def show_page(self, page, index):
         for page_dict in self.pages.values():
             for frame in page_dict.values():
@@ -70,7 +76,6 @@ class YTVHApp(tk.Tk):
             self.apply_video_filter()
             # 페이지네이션 초기화 및 첫 페이지 로드
             self.current_video_page = 0 # 페이지 이동 시 현재 페이지를 0으로 초기화
-            self.apply_video_filter()   # 필터링 및 첫 페이지 비디오 로드
     
     # name은 "shorts_distribution" 등 ...
     def show_grape(self, grape_sort, parent_frame, include_short_or_not_key=False):
@@ -160,10 +165,20 @@ class YTVHApp(tk.Tk):
     def apply_video_filter(self):
         # ... (기존 apply_video_filter 함수 코드) ...
         # (생략: 기존 apply_video_filter 함수 내용은 그대로 두시면 됩니다.)
-        selected_filter = self.filter_var.get()
-        self.total_filtered_videos = list(self.video_info_list) 
+        self.total_filtered_videos =self.video_info_list
 
-        # 필터 없음 ('none')은 정렬하지 않고 원본 순서대로 표시합니다.
+        if self.subscribed_only_var.get():
+            self.total_filtered_videos = sub_filter(self.total_filtered_videos)
+        if self.selected_date_entry.get().strip():
+            print(f"디버그: 날짜 필터 - 입력된 날짜: '{self.selected_date_entry.get().strip()}'")
+            self.total_filtered_videos = date_filter(self.total_filtered_videos, self.selected_date_entry.get().strip())
+        if self.selected_channel_entry.get().strip():
+            print(f"디버그: 채널 필터 - 입력된 채널: '{self.selected_channel_entry.get().strip()}'")
+            self.total_filtered_videos = channel_filter(self.total_filtered_videos, self.selected_channel_entry.get().strip())
+        if self.selected_category_var.get() != "none":
+            self.total_filtered_videos = category_filter(self.total_filtered_videos, self.selected_category_var.get())
+        self.total_filtered_videos = platform_filter(self.total_filtered_videos, self.selected_platform_var.get())
+        
         self.current_video_page = 0
         self.load_current_video_page()
 
@@ -348,16 +363,52 @@ class YTVHApp(tk.Tk):
         # --- 왼쪽 컬럼: 필터링 옵션 ---
         tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
 
-        self.filter_var = tk.StringVar(value="none") # 선택된 필터 값을 저장할 변수 (초기값은 '필터 없음')
+        # 1. 구독한 채널 필터 (체크박스)
+        tk.Checkbutton(filter_frame, text="구독한 채널만 보기", variable=self.subscribed_only_var).pack(anchor="w", padx=5, pady=2)
         
-        tk.Radiobutton(filter_frame, text="필터 없음", variable=self.filter_var, value="none",
-                       command=self.apply_video_filter).pack(anchor="w", padx=5, pady=2)
-        tk.Radiobutton(filter_frame, text="시청 시간 순 (오름차순)", variable=self.filter_var, value="watch_time_asc",
-                       command=self.apply_video_filter).pack(anchor="w", padx=5, pady=2)
-        tk.Radiobutton(filter_frame, text="시청 시간 순 (내림차순)", variable=self.filter_var, value="watch_time_desc",
-                       command=self.apply_video_filter).pack(anchor="w", padx=5, pady=2)
+        # 2. 선택한 날짜 필터 (입력 필드)
+        tk.Label(filter_frame, text="날짜 선택 (YYYY-MM-DD):").pack(anchor="w", padx=5, pady=2)
+        self.selected_date_entry = tk.Entry(filter_frame)
+        self.selected_date_entry.pack(fill="x", padx=5, pady=2)
 
-        # 필요에 따라 더 많은 필터 옵션을 추가하세요.
+        # 3. 선택한 채널 필터 (입력 필드)
+        tk.Label(filter_frame, text="채널 이름 입력:").pack(anchor="w", padx=5, pady=2)
+        self.selected_channel_entry = tk.Entry(filter_frame)
+        self.selected_channel_entry.pack(fill="x", padx=5, pady=2)
+
+
+        # 4. 선택한 카테고리 필터 (라디오 버튼)
+        tk.Label(filter_frame, text="카테고리 선택:").pack(anchor="w", padx=5, pady=2)
+        self.categories = {
+            "none": "선택 안 함",
+            "1": "Film & Animation",
+            "2": "Autos & Vehicles",
+            "10": "Music",
+            "15": "Pets & Animals",
+            "17": "Sports",
+            "20": "Gaming",
+            "22": "People & Blogs",
+            "23": "Comedy",
+            "24": "Entertainment",
+            "25": "News & Politics",
+            "26": "Howto & Style",
+            "27": "Education",
+            "28": "Science & Technology",
+            "29": "Nonprofits & Activism"
+        }
+        for category_id, category_name in self.categories.items():
+            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_id).pack(anchor="w", padx=5, pady=1)
+
+        # 5. 플랫폼 필터 (라디오 버튼)
+        tk.Label(filter_frame, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=10)
+
+        tk.Radiobutton(filter_frame, text="YouTube", variable=self.selected_platform_var, value="YouTube").pack(anchor="w", padx=5, pady=2)
+
+        tk.Radiobutton(filter_frame, text="YouTube Music", variable=self.selected_platform_var, value="YouTube Music").pack(anchor="w", padx=5, pady=2)
+        
+        # --- 완료 버튼 (모든 필터 설정을 적용) ---
+        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=15, fill="x")
+        
 
         # --- 오른쪽 컬럼: 비디오 표시 영역 및 페이지네이션 컨트롤 ---
         tk.Label(video_display_container_frame, text="영상 기록 모아보기", font=("Arial", 16)).pack(pady=10)

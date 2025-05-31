@@ -1,4 +1,5 @@
 from tool import dateTime_iso8601_to_dateTime
+from datetime import datetime
 
 # 쇼츠 영상 제외 하는 필터 함수
 # takeout: takeout 파일(리스트)
@@ -30,12 +31,12 @@ def not_short_filter(takeout):
     return not_short_takeout
 
 
-# 유튜브 뮤직에서 본 영상과 유튜브에서 본 영상 분류하는 함수
+# 유튜브 뮤직에서 본 영상과 유튜브에서 본 영상 분류하는 필터 함수
 # video_info_list: 응답 받은 정보 있는 파일(리스트)
-def music_and_not_music_filter(video_info_list, platform):
+def platform_filter(video_info_list, select_platform):
     filtered_viedio_info_list = []
-    for item in range(video_info_list):
-        if item["platform"] == platform:
+    for item in video_info_list:
+        if item["platform"] == select_platform:
             filtered_viedio_info_list.append(item)
     
     return filtered_viedio_info_list
@@ -50,7 +51,7 @@ def category_filter(vedio_info_list, select_category):
         if item.get("categoryId") == select_category:
             filtered_viedio_info_list.append(item)
 
-        return filtered_viedio_info_list
+    return filtered_viedio_info_list
 
 
 # 선택한 채널에 해당하는 영상을 뽑아내는 필터 함수
@@ -62,7 +63,7 @@ def channel_filter(vedio_info_list, select_channel):
         if item.get("channel") == select_channel:
             filtered_viedio_info_list.append(item)
 
-        return filtered_viedio_info_list
+    return filtered_viedio_info_list
     
 
 # 선택한 날짜에 해당하는 영상을 뽑아내는 필터 함수
@@ -70,9 +71,10 @@ def channel_filter(vedio_info_list, select_channel):
 # select_channel: 필터링할 날짜 (datetime.date 객체)
 def date_filter(video_info_list, target_date):
     filtered_video_info_list = []
+    target_datetime = datetime.strptime(target_date, "%Y-%m-%d").date() 
     for item in video_info_list:
-        dt = item.get("dateTime")
-        if dt.date() == target_date:
+        dt = item.get("dateTime").date() 
+        if dt.date() == target_datetime:
             filtered_video_info_list.append(item)
 
     return filtered_video_info_list
