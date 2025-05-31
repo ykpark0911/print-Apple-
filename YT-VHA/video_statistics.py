@@ -8,7 +8,7 @@ from datetime import timezone, timedelta
 # 좋아요 가장 많이 누른 채널 (상위 num개) 뽑아내는 함수
 # like_list: 좋아요 재생목록의 영상 정보담긴 파일(리스트)
 # num: 뽑아낼 채널 개수(int)
-def get_top_like_channel(like_list, num):
+def get_top_liked_channel(like_list, num):
     channel_list= []
     for item in like_list:
         channel = item["channel"]
@@ -16,9 +16,9 @@ def get_top_like_channel(like_list, num):
 
     
     channel_count = Counter(channel_list)
-    top_channels = channel_count.most_common(num)
+    top_liked_channels = channel_count.most_common(num)
 
-    return top_channels # channel_count({'침착맨': 50, '빠더너스': 32, .....})
+    return top_liked_channels
 
 
 # 가장 많이 본 채널 (상위 num개) 뽑아내는 함수
@@ -34,7 +34,8 @@ def get_top_channel(takeout, num):
     channel_count = Counter(channel_list)
     top_channels = channel_count.most_common(num)
     
-    return top_channels # channel_count({'침착맨': 50, '빠더너스': 32, .....})
+
+    return top_channels (체널이름 : 4, 체널이름 : 4, 체널이름 : 4)
 
 
 # 시간별 영상 시청 개수 새는 함수
@@ -51,12 +52,18 @@ def get_hour_distribution(takeout):
     hours = list(range(24))
     counts = [hour_count.get(hour, 0) for hour in hours]
 
-    return hours, counts
+    hour_distribution_dict = {
+        "hours": hours,
+        "counts": counts
+    }
+
+    return hour_distribution_dict
 
 
 # 날짜별 영상 시청 개수 새는 함수
 # group_by: "day"(하루), "week"(주), "month"(달), "weekDay"(요일)로 분류 가능
-def get_date_distribution(takeout, group_by):
+# average: 하루 평균으로 구할 것인지(bool)
+def get_date_distribution(takeout, group_by, average):
     group_date_list = [] #선택한 데이터 종류 저장 받는 곳
     dates_list = defaultdict(set)  # 시청한 날짜를 datetime 형태로 저장받는 곳
     
@@ -95,15 +102,21 @@ def get_date_distribution(takeout, group_by):
         group_counts.append(i[1])
     
 
-    if group_by == "week" or group_by == "month":
+    if group_by == "week" or group_by == "month" and average == True:
+        group_by = "average_" + group_by
         average_group_counts = []
         for j in group_dates:
             dates_count = len(dates_list[j]) #분석 종류에 해당하는 날짜 갯수
             avg = group_date_list[j]//dates_count #분석 종류의 카운트를 일별 평균으로 구함
             average_group_counts.append(avg)
-        return group_dates, (group_counts, average_group_counts)
-    else :
-        return group_dates, group_counts
+            group_counts = average_group_counts
+        
+    group_date_dict= {
+        group_by + "dates": group_dates,
+        "counts": group_counts
+    }
+    
+    return group_date_dict
 
 
 # 카테고리별 영상 시청 개수 새는 함수
@@ -124,4 +137,57 @@ def get_category_distribution(video_info_list):
         categories.append(i[0])
         counts.append(i[1])
 
-    return categories, counts
+    category_distribution_dict = {
+        "categories": categories,
+        "counts": counts
+    }
+
+    return category_distribution_dict
+
+
+def make_takeout_statistics(takeout):
+    statistics = []
+
+    top_channel_dict= get_top_channel(takeout, 10)
+
+    hour_distribution_dict = get_hour_distribution(takeout)
+    day_date_distribution_dict = get_date_distribution(takeout, "day", False)
+    week_date_distribution_dict = get_date_distribution(takeout, "week", False)
+    month_date_distribution_dict = get_date_distribution(takeout, "month", False)
+    average_week_date_distribution_dict = get_date_distribution(takeout, "week", True)
+    average_month_date_distribution_dict = get_date_distribution(takeout, "month", True)
+    weekDay_date_distribution_dict = get_date_distribution(takeout, "weekDay", False)
+
+
+    statistics = {
+    "top_channel": top_channel_dict,
+    "hour_distribution": hour_distribution_dict,
+    "day_date_distribution": day_date_distribution_dict,
+    "week_date_distribution": week_date_distribution_dict,
+    "month_date_distribution": month_date_distribution_dict,
+    "average_week_date_distribution": average_week_date_distribution_dict,
+    "average_month_date_distribution": average_month_date_distribution_dict,
+    "weekDay_date_distribution": weekDay_date_distribution_dict,
+    }
+    
+    return statistics
+
+
+def make_video_info_list_statistics(video_info_list):
+    statistics = []
+
+    category_distribution_dict = get_category_distribution(video_info_list)
+
+    statistics.append(category_distribution_dict)
+    
+    return statistics
+
+
+def make_like_list_statistics(like_list):
+    statistics = []
+
+    top_liked_channel = get_top_liked_channel(like_list, 10)
+
+    statistics.append(top_liked_channel)
+    
+    return statistics
