@@ -9,8 +9,6 @@ from tool import duration_iso8601_to_seconds, dateTime_iso8601_to_dateTime, get_
 # takeout: takeout 파일(리스트)
 def get_video_info(youtube, video_ids, takeout, sub_list):
     # 추가로 영상 시간을 통해 걸러진 쇼츠 영상 개수, 오류 영상 개수
-    global short_count, error_count
-    short_count, error_count = 0, 0
 
     # 호출한 영상 정보를 담는 리스트
     video_info_list = []
@@ -118,7 +116,6 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
             if id not in response_dict:
                 print(f"{i + j}번째 영상은 응답 없음 → 제거 대상")
                 del_list.append(i + j)
-                error_count += 1
                 continue
             
             # 응답 받은 영상의 정보 (= item)
@@ -128,7 +125,6 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
             if is_short(info) == "short":
                 duration_sec = duration_iso8601_to_seconds(info["contentDetails"]["duration"])
                 print(f"{i + j}번째인 {info["snippet"]["title"]} 영상은 {duration_sec}초로 쇼츠로 판별됨 → 제거 대상")
-                short_count += 1
                 del_list.append(i + j)
                 continue
             
@@ -170,12 +166,3 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
 'isShort': 'short',
 'dateTime': datetime.datetime(2025, 5, 13, 10, 10, 0, 142000, tzinfo=datetime.timezone.utc)}]
 '''
-
-# get_video_info 함수를 통해서 뽑아낸 쇼츠 영상 개수 리턴하는 함수
-def for_time_get_short_count():
-    return short_count
-
-
-# get_video_info 함수를 통해서 뽑아낸 오류 영상 개수 리턴하는 함수
-def get_error_count():
-    return error_count
