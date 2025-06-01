@@ -23,40 +23,15 @@ class YTVHApp(tk.Tk):
         super().__init__()
         self.title("YTVH - YouTube View History Analyzer")
         self.geometry("800x600")
-
-        # 각종 변수 초기화
-        # 영상 관련 리스트 초기화
         self.video_info_list = []
-        self.sub_list= []
-        self.liked_video_info_list = []
-        
-        # 필터링 관련 변수 초기화
-        self.subscribed_only_var = tk.BooleanVar(value=False)
-        self.selected_date_entry = None
-        self.selected_channel_entry = None
-        self.selected_category_var = tk.StringVar(value="none")
-        self.selected_platform_var = tk.StringVar(value="YouTube")
-        self.selected_channel_var = tk.StringVar(value="<전체>") # 좋아요 영상 필터용
 
-        # **모든 run 페이지에서 공통으로 사용될 비디오 표시 및 페이지네이션 위젯 초기화**
-        # 이 위젯들은 나중에 create_run_page2, create_run_page3에 인자로 전달하거나,
-        # 각 페이지 프레임에 직접 pack하여 사용합니다.
-        self.video_display_container_frame_run2 = None 
-        self.video_canvas_run2 = None                 
-        self.video_display_scrollbar_run2 = None
-        self.video_scrollable_frame_run2 = None       
+        self.subscribed_only_var = tk.BooleanVar(value=False) # 1. 구독 채널만 보기 (체크박스)
+        self.selected_date_entry = None # 2. 선택 날짜 (입력 필드)
+        self.selected_channel_entry = None # 3. 선택 채널 (입력 필드)
+        self.selected_category_var = tk.StringVar(value="none") # 4. 카테고리 (라디오 버튼)
+        self.selected_platform_var = tk.StringVar(value="YouTube") # 5. 플랫폼 (라디오 버튼, 기본값 YouTube)
 
-        self.video_display_container_frame_run3 = None 
-        self.video_canvas_run3 = None                 
-        self.video_display_scrollbar_run3 = None
-        self.video_scrollable_frame_run3 = None
-        
-        # 필터 프레임들을 미리 초기화 (나중에 create_run_page2/3에서 실제 위젯 생성)
-        self.filter_frame_for_run2 = None 
-        self.filter_frame_for_run3 = None
-        self.subscribed_channels_radio_frame = None # 구독 채널 라디오 버튼용 프레임
-
-        # 영상 보여주기 페이지 초기화
+        # 영상 보여주기 페이지 초기
         self.current_video_page = 0    # 현재 비디오 페이지 (0부터 시작)
         self.videos_per_page = 5       # 한 페이지에 보여줄 영상 개수
         self.total_filtered_videos = [] # 현재 필터링된 전체 영상 목록 (페이지네이션 대상)
@@ -66,6 +41,7 @@ class YTVHApp(tk.Tk):
         start_page_frames = {
             0 : self.create_start_frame0(),
             1 : self.create_start_frame1(),
+            2 : self.create_start_frame2()
         }
 
         # 페이지 구성
@@ -76,135 +52,20 @@ class YTVHApp(tk.Tk):
         self.current_page = "start"
         self.show_page("start", 0)
 
-
-    def create_video_display_widgets(self, parent_frame, page_type):
-        """
-        비디오 목록 표시 및 페이지네이션을 위한 공통 위젯들을 생성합니다.
-        이 위젯들은 모든 비디오 보기 페이지에서 재사용됩니다.
-        """
-        # 비디오 목록을 담을 컨테이너
-        video_display_container_frame = tk.Frame(parent_frame)
-        video_display_container_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-        tk.Label(video_display_container_frame, text="영상 기록 모아보기", font=("Arial", 16)).pack(pady=10)
-
-        # 페이지네이션 컨트롤 프레임 (페이지 번호, 이전/다음 버튼)
-        pagination_control_frame = tk.Frame(video_display_container_frame)
-        pagination_control_frame.pack(pady=5)
-
-        if page_type == 'run2':
-            self.prev_page_button_run2 = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
-            self.prev_page_button_run2.pack(side="left", padx=5)
-
-            self.page_info_label_run2 = tk.Label(pagination_control_frame, text="페이지: 1/1")
-            self.page_info_label_run2.pack(side="left", padx=10)
-
-            self.next_page_button_run2 = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
-            self.next_page_button_run2.pack(side="left", padx=5)
-        elif page_type == 'run3':
-            self.prev_page_button_run3 = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
-            self.prev_page_button_run3.pack(side="left", padx=5)
-
-            self.page_info_label_run3 = tk.Label(pagination_control_frame, text="페이지: 1/1")
-            self.page_info_label_run3.pack(side="left", padx=10)
-
-            self.next_page_button_run3 = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
-            self.next_page_button_run3.pack(side="left", padx=5)
-        
-        # 수정: Canvas와 Scrollbar, Scrollable Frame은 각 페이지마다 고유하게 가집니다.
-        # 따라서 멤버 변수에 할당할 때 page_type에 따라 구분합니다.
-        video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0")
-        video_display_scrollbar = tk.Scrollbar(video_display_container_frame, orient="vertical", command=video_canvas.yview)
-        video_scrollable_frame = tk.Frame(video_canvas, background="#f0f0f0")
-
-        video_scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.video_canvas.configure(
-                scrollregion=self.video_canvas.bbox("all")
-            )
-        )
-
-         # **[5] 스크롤 가능 프레임을 Canvas 안에 "윈도우"로 추가합니다.**
-        # (0, 0)은 Canvas의 왼쪽 위 모서리입니다. `anchor="nw"`는 프레임의 왼쪽 위를 Canvas의 (0,0)에 맞춥니다.
-        video_canvas.create_window((0, 0), window=video_scrollable_frame, anchor="nw")
-        
-        # **[6] Canvas에 스크롤바를 연결합니다.**
-        # `yscrollcommand`는 Canvas의 Y축 스크롤을 Scrollbar의 `set` 메서드와 연결합니다.
-        video_canvas.configure(yscrollcommand=video_display_scrollbar.set)
-
-        # **[7] Canvas와 Scrollbar를 화면에 배치합니다.**
-        video_canvas.pack(side="left", fill="both", expand=True) # Canvas가 왼쪽을 채우고 확장 가능하게
-        video_display_scrollbar.pack(side="right", fill="y") # Scrollbar가 Canvas 오른쪽에 붙어 세로로 채우게
-        
-        # 수정: 각 페이지별 멤버 변수에 할당하여 충돌 방지
-        if page_type == 'run2':
-            self.video_display_container_frame_run2 = video_display_container_frame
-            self.video_canvas_run2 = video_canvas
-            self.video_display_scrollbar_run2 = video_display_scrollbar
-            self.video_scrollable_frame_run2 = video_scrollable_frame
-        elif page_type == 'run3':
-            self.video_display_container_frame_run3 = video_display_container_frame
-            self.video_canvas_run3 = video_canvas
-            self.video_display_scrollbar_run3 = video_display_scrollbar
-            self.video_scrollable_frame_run3 = video_scrollable_frame
-        
-        return video_display_container_frame
-
-
     def show_page(self, page, index):
-        # 모든 프레임을 숨깁니다.
-        for page_group in self.pages.values():
-            for frame_item in page_group.values():
-                frame_item.pack_forget()
+        for page_dict in self.pages.values():
+            for frame in page_dict.values():
+                frame.pack_forget()
 
-        # 현재 페이지의 프레임을 보여줍니다.
         self.pages[page][index].pack(expand=True, fill="both")
 
         self.current_frame_index = index
         self.current_page = page
 
-        # 'run' 페이지의 특정 인덱스에서 비디오 필터링 및 로드
-        if page == "run":
-            # 모든 필터 프레임을 숨깁니다.
-            if self.filter_frame_for_run2: self.filter_frame_for_run2.pack_forget()
-            if self.filter_frame_for_run3: self.filter_frame_for_run3.pack_forget()
-
-            # 현재 활성화될 페이지에 따라 비디오 표시 관련 멤버 변수들을 설정
-            if index == 2: # 일반 영상 보기 페이지
-                # 수정: 페이지네이션 버튼 및 라벨을 해당 페이지의 것으로 참조하도록 설정
-                self.prev_page_button = self.prev_page_button_run2
-                self.next_page_button = self.next_page_button_run2
-                self.page_info_label = self.page_info_label_run2
-                self.video_canvas = self.video_canvas_run2
-                self.video_scrollable_frame = self.video_scrollable_frame_run2
-                self.video_display_scrollbar = self.video_display_scrollbar_run2
-
-                if self.filter_frame_for_run2: self.filter_frame_for_run2.pack(side="left", fill="y", padx=10, pady=10)
-                self.apply_video_filter()
-                print("일반 영상으로 바뀜")
-                # 중요한 수정: 현재 페이지의 canvas와 scrollable_frame을 self.video_canvas와 self.video_scrollable_frame에 할당
-                self.video_canvas = self.video_canvas_run2
-                self.video_scrollable_frame = self.video_scrollable_frame_run2
-                self.video_display_scrollbar = self.video_display_scrollbar_run2
-                # 수정: 페이지 전환 시 바로 필터 적용 및 로드
-                self.apply_video_filter() 
-                print("일반 영상으로 바뀜")
-            elif index == 3: # 좋아요 영상 보기 페이지
-                self.prev_page_button = self.prev_page_button_run3
-                self.next_page_button = self.next_page_button_run3
-                self.page_info_label = self.page_info_label_run3
-                self.video_canvas = self.video_canvas_run3
-                self.video_scrollable_frame = self.video_scrollable_frame_run3
-                self.video_display_scrollbar = self.video_display_scrollbar_run3
-
-                self.total_filtered_videos = self.liked_video_info_list
-                if self.filter_frame_for_run3: self.filter_frame_for_run3.pack(side="left", fill="y", padx=10, pady=10)
-                # 수정: 페이지 전환 시 바로 필터 적용 및 로드
-                self.apply_video_filter2()
-                print("좋아요 영상으로 바뀜")
-            
+        if page == "run" and index == 2:
+            self.apply_video_filter()
             # 페이지네이션 초기화 및 첫 페이지 로드
-            self.current_video_page = 0
+            self.current_video_page = 0 # 페이지 이동 시 현재 페이지를 0으로 초기화
     
     # name은 "shorts_distribution" 등 ...
     def show_grape(self, grape_sort, parent_frame, include_short_or_not_key=False):
@@ -221,6 +82,7 @@ class YTVHApp(tk.Tk):
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
     def display_videos(self, video_info_list, parent_frame):
+
         # **[1] 기존에 표시된 비디오 위젯들을 모두 지웁니다.**
         # 이 부분이 중요합니다. 새 목록을 표시할 때 이전 목록이 남아있지 않도록 합니다.
         for widget in parent_frame.winfo_children():
@@ -269,9 +131,8 @@ class YTVHApp(tk.Tk):
             
         # **[6] 모든 위젯 배치 후 스크롤 영역 업데이트**
         # 이 부분이 없으면 스크롤바가 제대로 작동하지 않을 수 있습니다.
-        if self.video_canvas: 
-            self.video_canvas.update_idletasks() 
-            self.video_canvas.configure(scrollregion=self.video_canvas.bbox("all")) 
+        self.video_canvas.update_idletasks() # Tkinter가 모든 위젯의 크기와 위치를 계산하도록 강제합니다.
+        self.video_canvas.configure(scrollregion=self.video_canvas.bbox("all")) # Canvas의 스크롤 영역을 모든 내용물에 맞춰 다시 설정합니다.
 
         self.update_pagination_buttons()
         
@@ -294,7 +155,7 @@ class YTVHApp(tk.Tk):
     def apply_video_filter(self):
         # ... (기존 apply_video_filter 함수 코드) ...
         # (생략: 기존 apply_video_filter 함수 내용은 그대로 두시면 됩니다.)
-        self.total_filtered_videos = list(self.video_info_list) 
+        self.total_filtered_videos =self.video_info_list
 
         if self.subscribed_only_var.get():
             self.total_filtered_videos = sub_filter(self.total_filtered_videos)
@@ -308,15 +169,6 @@ class YTVHApp(tk.Tk):
             self.total_filtered_videos = category_filter(self.total_filtered_videos, self.selected_category_var.get())
         self.total_filtered_videos = platform_filter(self.total_filtered_videos, self.selected_platform_var.get())
         
-        self.current_video_page = 0
-        self.load_current_video_page()
-
-    def apply_video_filter2(self):
-        self.total_filtered_videos = list(self.liked_video_info_list) 
-
-        if self.selected_channel_var.get() != "<전체>":
-            self.total_filtered_videos = channel_filter(self.total_filtered_videos, self.selected_channel_var.get())
-
         self.current_video_page = 0
         self.load_current_video_page()
 
@@ -335,7 +187,6 @@ class YTVHApp(tk.Tk):
             self.page_info_label.config(text="페이지: 0/0")
         else:
             self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
-    
 
     def go_next_video_page(self):
         """다음 페이지로 이동합니다."""
@@ -357,25 +208,22 @@ class YTVHApp(tk.Tk):
         total_pages = (len(self.total_filtered_videos) + self.videos_per_page - 1) // self.videos_per_page
 
         # 이전 버튼 활성화/비활성화
-        if self.prev_page_button: 
-            if self.current_video_page <= 0:
-                self.prev_page_button.config(state="disabled")
-            else:
-                self.prev_page_button.config(state="normal")
+        if self.current_video_page <= 0:
+            self.prev_page_button.config(state="disabled")
+        else:
+            self.prev_page_button.config(state="normal")
         
         # 다음 버튼 활성화/비활성화
-        if self.next_page_button: 
-            if self.current_video_page >= total_pages - 1 or total_pages == 0:
-                self.next_page_button.config(state="disabled")
-            else:
-                self.next_page_button.config(state="normal")
+        if self.current_video_page >= total_pages - 1 or total_pages == 0:
+            self.next_page_button.config(state="disabled")
+        else:
+            self.next_page_button.config(state="normal")
         
         # 페이지 정보 레이블 업데이트 (load_current_video_page에서도 업데이트되지만, 안전을 위해 여기에 다시 호출)
-        if self.page_info_label: 
-            if total_pages == 0:
-                self.page_info_label.config(text="페이지: 0/0")
-            else:
-                self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
+        if total_pages == 0:
+            self.page_info_label.config(text="페이지: 0/0")
+        else:
+            self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
 
 
     def guest_user_login(self):
@@ -394,7 +242,7 @@ class YTVHApp(tk.Tk):
         self.compare_mod = "friend"
         self.next_page()
     
-    def file_loading(self):
+    def file_loading(self): # 함수에서 함수 호출하는 식으로 코드 줄이기!!
         # 파일 경로 받기
         takeout_file_path = askopenfilename(
             title="테이크아웃 파일 선택",
@@ -408,14 +256,14 @@ class YTVHApp(tk.Tk):
         self.not_shorts_takeout = not_short_filter(self.takeout)
         print("테이크 아웃 파일 불러오기 완료")
         # 구독자 정보 얻기
-        self.sub_list = get_sub_list(sub_linfo_file_path)
+        sub_list = get_sub_list(sub_linfo_file_path)
 
         # 영상 id 추출(쇼츠 제외만)
         video_ids = extract_video_ids_from_watch_history(self.not_shorts_takeout)
         print("아이디 추출 완료")
 
         # 영상 정보 호출(쇼츠 제외만)
-        self.video_info_list = get_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
+        self.video_info_list = get_video_info(self.youtube, video_ids, self.not_shorts_takeout, sub_list)
         print("영상 정보 호출 완료")
 
         # 좋아요한 영상 정보
@@ -452,6 +300,14 @@ class YTVHApp(tk.Tk):
 
     def create_start_frame1(self):
         frame = tk.Frame(self)
+        tk.Label(frame, text="비교 모드 선택", font=("Arial", 16)).pack(pady=20)
+        tk.Button(frame, text="자신의 시청 통계 확인", command=self.compare_mine, width=20, height=2).pack(pady=10)
+        tk.Button(frame, text="친구와 비교하기", command=self.compare_friend, width=20, height=2).pack(pady=10)
+
+        return frame
+
+    def create_start_frame2(self):
+        frame = tk.Frame(self)
         tk.Label(frame, text="테이크아웃 파일 불러오기", font=("Arial", 16)).pack(pady=20)
         tk.Button(frame, text="파일 올리기", width=20, height=2, command= self.file_loading).pack(pady=5)
         link_label = tk.Label(frame, text="테이크아웃 링크 열기", fg="blue", cursor="hand2", font=("Arial", 12, "underline"))
@@ -470,11 +326,11 @@ class YTVHApp(tk.Tk):
         tk.Button(frame, text="💾 저장하기", command=self.save_action).pack(side="right", padx=10, pady=10)
         # 중앙 버튼들
         tk.Button(frame, text="1. 통계 보기", width=20, height=2,
-                  command=lambda: self.show_page(self.current_page, 1)).pack(pady=10)
+                  command=lambda: self.show_page("run", 1)).pack(pady=10)
         tk.Button(frame, text="2. 일반 영상 보기", width=20, height=2,
-                  command=lambda: self.show_page(self.current_page, 2)).pack(pady=10)
+                  command=lambda: self.show_page("run", 2)).pack(pady=10)
         tk.Button(frame, text="3. 좋아요 영상 보기", width=20, height=2,
-                  command=lambda: self.show_page(self.current_page, 3)).pack(pady=10)
+                  command=lambda: self.show_page("run", 3)).pack(pady=10)
 
         return frame
     
@@ -551,8 +407,55 @@ class YTVHApp(tk.Tk):
         # --- 완료 버튼 (모든 필터 설정을 적용) ---
         tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=15, fill="x")
         
+
         # --- 오른쪽 컬럼: 비디오 표시 영역 및 페이지네이션 컨트롤 ---
-        self.create_video_display_widgets(frame, 'run2')
+        tk.Label(video_display_container_frame, text="영상 기록 모아보기", font=("Arial", 16)).pack(pady=10)
+
+        # 페이지네이션 컨트롤 프레임 (페이지 번호, 이전/다음 버튼)
+        pagination_control_frame = tk.Frame(video_display_container_frame)
+        pagination_control_frame.pack(pady=5)
+
+        self.prev_page_button = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
+        self.prev_page_button.pack(side="left", padx=5)
+
+        self.page_info_label = tk.Label(pagination_control_frame, text="페이지: 1/1")
+        self.page_info_label.pack(side="left", padx=10)
+
+        self.next_page_button = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
+        self.next_page_button.pack(side="left", padx=5)
+
+        # **[2] 스크롤 가능한 영역을 만들기 위한 tk.Canvas 및 tk.Scrollbar**
+        # Canvas는 그림을 그릴 수 있는 영역이자, 스크롤 가능한 "창" 역할을 합니다.
+        self.video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0") # 테두리 없음, 밝은 회색 배경
+        
+        # Scrollbar는 Canvas와 연동되어 스크롤 기능을 제공합니다.
+        self.video_display_scrollbar = tk.Scrollbar(video_display_container_frame, orient="vertical", command=self.video_canvas.yview)
+        
+        # **[3] 실제 비디오 항목들이 배치될 프레임 (Canvas 안에 생성)**
+        # 이 프레임은 Canvas의 "창" 역할을 하는 곳에 실제 내용을 담는 곳입니다.
+        self.video_scrollable_frame = tk.Frame(self.video_canvas, background="#f0f0f0") # Canvas와 동일한 배경색
+
+        # **[4] 스크롤 가능 프레임의 크기가 변경될 때 Canvas의 스크롤 영역을 업데이트합니다.**
+        # `bbox("all")`은 `self.video_scrollable_frame` 안에 있는 모든 내용물의 경계 상자를 계산합니다.
+        # 이 경계 상자가 Canvas의 `scrollregion`이 되어야 스크롤바가 내용물 길이에 맞춰 움직입니다.
+        self.video_scrollable_frame.bind(
+            "<Configure>", # 프레임의 크기가 변경될 때 이 이벤트를 발생시킵니다.
+            lambda e: self.video_canvas.configure(
+                scrollregion=self.video_canvas.bbox("all") # 전체 내용물의 크기에 맞춰 스크롤 영역 설정
+            )
+        )
+
+        # **[5] 스크롤 가능 프레임을 Canvas 안에 "윈도우"로 추가합니다.**
+        # (0, 0)은 Canvas의 왼쪽 위 모서리입니다. `anchor="nw"`는 프레임의 왼쪽 위를 Canvas의 (0,0)에 맞춥니다.
+        self.video_canvas.create_window((0, 0), window=self.video_scrollable_frame, anchor="nw")
+        
+        # **[6] Canvas에 스크롤바를 연결합니다.**
+        # `yscrollcommand`는 Canvas의 Y축 스크롤을 Scrollbar의 `set` 메서드와 연결합니다.
+        self.video_canvas.configure(yscrollcommand=self.video_display_scrollbar.set)
+
+        # **[7] Canvas와 Scrollbar를 화면에 배치합니다.**
+        self.video_canvas.pack(side="left", fill="both", expand=True) # Canvas가 왼쪽을 채우고 확장 가능하게
+        self.video_display_scrollbar.pack(side="right", fill="y") # Scrollbar가 Canvas 오른쪽에 붙어 세로로 채우게
 
         # 뒤로가기 버튼은 맨 아래에 배치
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
@@ -561,30 +464,8 @@ class YTVHApp(tk.Tk):
     
     def create_run_page3(self):
         frame = tk.Frame(self)
-
-        filter_frame = tk.Frame(frame, bd=2, relief="groove", width=200)
-        filter_frame.pack(side="left", fill="y", padx=10, pady=10)
-        filter_frame.pack_propagate(False)
-
-        video_display_container_frame = tk.Frame(frame)
-        video_display_container_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
-
-        # --- 왼쪽 컬럼: 필터링 옵션 ---
-        tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
-
-        tk.Label(filter_frame, text="채널 선택:").pack(anchor="w", padx=5, pady=2)
-        self.sub_list.append("<전체>")
-        for channel_name in self.sub_list:
-            tk.Radiobutton(filter_frame, text=channel_name, variable=self.selected_channel_var , value=channel_name).pack(anchor="w", padx=5, pady=1)
-
-        # --- 완료 버튼 (모든 필터 설정을 적용) ---
-        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter2).pack(anchor="w", padx=5, pady=15, fill="x")
-
-       # 우측 비디오 표시 컨테이너 (공통 함수로 생성)
-        self.create_video_display_widgets(frame, 'run3')
-
-        # 뒤로가기 버튼은 맨 아래에 배치
-        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
+        tk.Label(frame, text=f"좋아요한 영상 기록 모아보기", font=("Arial", 20)).pack(pady=100)
+        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack()
 
         return frame
 

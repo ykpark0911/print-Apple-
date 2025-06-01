@@ -16,6 +16,5 @@ def get_sub_list(csv_path):
 
 
 '''
-{'채널 ID': 'UC-Jp4WHCXhxvWQ5Ab4JibJQ', '채널 URL': 'http://www.youtube.com/channel/UC-Jp4WHCXhxvWQ5Ab4JibJQ', '채널 제목': '벙
-구'}
+["채널1", "채널2", "채널3"]
 '''

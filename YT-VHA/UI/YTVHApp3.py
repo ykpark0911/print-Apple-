@@ -23,14 +23,10 @@ class YTVHApp(tk.Tk):
         super().__init__()
         self.title("YTVH - YouTube View History Analyzer")
         self.geometry("800x600")
-
-        # 각종 변수 초기화
-        # 영상 관련 리스트 초기화
         self.video_info_list = []
         self.sub_list= []
         self.liked_video_info_list = []
-        
-        # 필터링 관련 변수 초기화
+
         self.subscribed_only_var = tk.BooleanVar(value=False)
         self.selected_date_entry = None
         self.selected_channel_entry = None
@@ -38,9 +34,8 @@ class YTVHApp(tk.Tk):
         self.selected_platform_var = tk.StringVar(value="YouTube")
         self.selected_channel_var = tk.StringVar(value="<전체>") # 좋아요 영상 필터용
 
-        # **모든 run 페이지에서 공통으로 사용될 비디오 표시 및 페이지네이션 위젯 초기화**
-        # 이 위젯들은 나중에 create_run_page2, create_run_page3에 인자로 전달하거나,
-        # 각 페이지 프레임에 직접 pack하여 사용합니다.
+        # 수정: 각 페이지별로 고유한 비디오 표시 관련 위젯들을 가리킬 멤버 변수들 추가
+        # 이 변수들은 create_common_video_display_widgets에서 생성 및 할당됩니다.
         self.video_display_container_frame_run2 = None 
         self.video_canvas_run2 = None                 
         self.video_display_scrollbar_run2 = None
@@ -49,14 +44,21 @@ class YTVHApp(tk.Tk):
         self.video_display_container_frame_run3 = None 
         self.video_canvas_run3 = None                 
         self.video_display_scrollbar_run3 = None
-        self.video_scrollable_frame_run3 = None
+        self.video_scrollable_frame_run3 = None       
+
+        # 페이지네이션 버튼들은 클래스 인스턴스 전체에서 하나만 존재하며, 
+        # 현재 활성화된 페이지에 따라 command가 재할당될 필요 없이 load_current_video_page에서
+        # self.total_filtered_videos를 기반으로 업데이트되도록 유지합니다.
+        self.prev_page_button = None 
+        self.next_page_button = None
+        self.page_info_label = None
         
         # 필터 프레임들을 미리 초기화 (나중에 create_run_page2/3에서 실제 위젯 생성)
         self.filter_frame_for_run2 = None 
         self.filter_frame_for_run3 = None
         self.subscribed_channels_radio_frame = None # 구독 채널 라디오 버튼용 프레임
 
-        # 영상 보여주기 페이지 초기화
+        # 영상 보여주기 페이지 초기
         self.current_video_page = 0    # 현재 비디오 페이지 (0부터 시작)
         self.videos_per_page = 5       # 한 페이지에 보여줄 영상 개수
         self.total_filtered_videos = [] # 현재 필터링된 전체 영상 목록 (페이지네이션 대상)
@@ -77,10 +79,11 @@ class YTVHApp(tk.Tk):
         self.show_page("start", 0)
 
 
-    def create_video_display_widgets(self, parent_frame, page_type):
+    def create_common_video_display_widgets(self, parent_frame, page_type):
         """
         비디오 목록 표시 및 페이지네이션을 위한 공통 위젯들을 생성합니다.
         이 위젯들은 모든 비디오 보기 페이지에서 재사용됩니다.
+        page_type: 'run2' 또는 'run3' (어떤 페이지에서 호출되었는지 식별)
         """
         # 비디오 목록을 담을 컨테이너
         video_display_container_frame = tk.Frame(parent_frame)
@@ -92,25 +95,23 @@ class YTVHApp(tk.Tk):
         pagination_control_frame = tk.Frame(video_display_container_frame)
         pagination_control_frame.pack(pady=5)
 
-        if page_type == 'run2':
-            self.prev_page_button_run2 = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
-            self.prev_page_button_run2.pack(side="left", padx=5)
+        # 수정: 페이지네이션 버튼들은 한번만 생성하고, 다시 pack_forget() 후 현재 프레임에 pack 함
+        if not self.prev_page_button:
+            self.prev_page_button = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
+        self.prev_page_button.pack_forget() # 이전에 다른 프레임에 있던 버튼 숨기기
+        self.prev_page_button.pack(side="left", padx=5) # 현재 프레임에 다시 pack
 
-            self.page_info_label_run2 = tk.Label(pagination_control_frame, text="페이지: 1/1")
-            self.page_info_label_run2.pack(side="left", padx=10)
+        if not self.page_info_label:
+            self.page_info_label = tk.Label(pagination_control_frame, text="페이지: 1/1")
+        self.page_info_label.pack_forget()
+        self.page_info_label.pack(side="left", padx=10)
 
-            self.next_page_button_run2 = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
-            self.next_page_button_run2.pack(side="left", padx=5)
-        elif page_type == 'run3':
-            self.prev_page_button_run3 = tk.Button(pagination_control_frame, text="이전", command=self.go_prev_video_page, state="disabled")
-            self.prev_page_button_run3.pack(side="left", padx=5)
+        if not self.next_page_button:
+            self.next_page_button = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
+        self.next_page_button.pack_forget()
+        self.next_page_button.pack(side="left", padx=5)
 
-            self.page_info_label_run3 = tk.Label(pagination_control_frame, text="페이지: 1/1")
-            self.page_info_label_run3.pack(side="left", padx=10)
 
-            self.next_page_button_run3 = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
-            self.next_page_button_run3.pack(side="left", padx=5)
-        
         # 수정: Canvas와 Scrollbar, Scrollable Frame은 각 페이지마다 고유하게 가집니다.
         # 따라서 멤버 변수에 할당할 때 page_type에 따라 구분합니다.
         video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0")
@@ -119,22 +120,16 @@ class YTVHApp(tk.Tk):
 
         video_scrollable_frame.bind(
             "<Configure>",
-            lambda e: self.video_canvas.configure(
-                scrollregion=self.video_canvas.bbox("all")
+            lambda e: video_canvas.configure(
+                scrollregion=video_canvas.bbox("all")
             )
         )
 
-         # **[5] 스크롤 가능 프레임을 Canvas 안에 "윈도우"로 추가합니다.**
-        # (0, 0)은 Canvas의 왼쪽 위 모서리입니다. `anchor="nw"`는 프레임의 왼쪽 위를 Canvas의 (0,0)에 맞춥니다.
         video_canvas.create_window((0, 0), window=video_scrollable_frame, anchor="nw")
-        
-        # **[6] Canvas에 스크롤바를 연결합니다.**
-        # `yscrollcommand`는 Canvas의 Y축 스크롤을 Scrollbar의 `set` 메서드와 연결합니다.
         video_canvas.configure(yscrollcommand=video_display_scrollbar.set)
 
-        # **[7] Canvas와 Scrollbar를 화면에 배치합니다.**
-        video_canvas.pack(side="left", fill="both", expand=True) # Canvas가 왼쪽을 채우고 확장 가능하게
-        video_display_scrollbar.pack(side="right", fill="y") # Scrollbar가 Canvas 오른쪽에 붙어 세로로 채우게
+        video_canvas.pack(side="left", fill="both", expand=True)
+        video_display_scrollbar.pack(side="right", fill="y")
         
         # 수정: 각 페이지별 멤버 변수에 할당하여 충돌 방지
         if page_type == 'run2':
@@ -169,43 +164,31 @@ class YTVHApp(tk.Tk):
             if self.filter_frame_for_run2: self.filter_frame_for_run2.pack_forget()
             if self.filter_frame_for_run3: self.filter_frame_for_run3.pack_forget()
 
-            # 현재 활성화될 페이지에 따라 비디오 표시 관련 멤버 변수들을 설정
+            # 수정: 현재 활성화될 페이지에 따라 비디오 표시 관련 멤버 변수들을 설정
             if index == 2: # 일반 영상 보기 페이지
-                # 수정: 페이지네이션 버튼 및 라벨을 해당 페이지의 것으로 참조하도록 설정
-                self.prev_page_button = self.prev_page_button_run2
-                self.next_page_button = self.next_page_button_run2
-                self.page_info_label = self.page_info_label_run2
-                self.video_canvas = self.video_canvas_run2
-                self.video_scrollable_frame = self.video_scrollable_frame_run2
-                self.video_display_scrollbar = self.video_display_scrollbar_run2
-
+                self.total_filtered_videos = self.video_info_list
                 if self.filter_frame_for_run2: self.filter_frame_for_run2.pack(side="left", fill="y", padx=10, pady=10)
-                self.apply_video_filter()
-                print("일반 영상으로 바뀜")
                 # 중요한 수정: 현재 페이지의 canvas와 scrollable_frame을 self.video_canvas와 self.video_scrollable_frame에 할당
                 self.video_canvas = self.video_canvas_run2
                 self.video_scrollable_frame = self.video_scrollable_frame_run2
                 self.video_display_scrollbar = self.video_display_scrollbar_run2
-                # 수정: 페이지 전환 시 바로 필터 적용 및 로드
-                self.apply_video_filter() 
+                self.apply_video_filter()
                 print("일반 영상으로 바뀜")
             elif index == 3: # 좋아요 영상 보기 페이지
-                self.prev_page_button = self.prev_page_button_run3
-                self.next_page_button = self.next_page_button_run3
-                self.page_info_label = self.page_info_label_run3
+                self.total_filtered_videos = self.liked_video_info_list
+                if self.filter_frame_for_run3: self.filter_frame_for_run3.pack(side="left", fill="y", padx=10, pady=10)
+                # 중요한 수정: 현재 페이지의 canvas와 scrollable_frame을 self.video_canvas와 self.video_scrollable_frame에 할당
                 self.video_canvas = self.video_canvas_run3
                 self.video_scrollable_frame = self.video_scrollable_frame_run3
                 self.video_display_scrollbar = self.video_display_scrollbar_run3
-
-                self.total_filtered_videos = self.liked_video_info_list
-                if self.filter_frame_for_run3: self.filter_frame_for_run3.pack(side="left", fill="y", padx=10, pady=10)
-                # 수정: 페이지 전환 시 바로 필터 적용 및 로드
                 self.apply_video_filter2()
                 print("좋아요 영상으로 바뀜")
             
             # 페이지네이션 초기화 및 첫 페이지 로드
             self.current_video_page = 0
-    
+            # load_current_video_page는 위에 할당된 self.video_scrollable_frame을 사용하게 됩니다.
+            self.load_current_video_page() 
+
     # name은 "shorts_distribution" 등 ...
     def show_grape(self, grape_sort, parent_frame, include_short_or_not_key=False):
         if include_short_or_not_key:
@@ -221,8 +204,8 @@ class YTVHApp(tk.Tk):
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
     def display_videos(self, video_info_list, parent_frame):
+
         # **[1] 기존에 표시된 비디오 위젯들을 모두 지웁니다.**
-        # 이 부분이 중요합니다. 새 목록을 표시할 때 이전 목록이 남아있지 않도록 합니다.
         for widget in parent_frame.winfo_children():
             widget.destroy()
 
@@ -237,14 +220,18 @@ class YTVHApp(tk.Tk):
             img_data = None
             tk_img = None
             if thumbnail_url:
-                response = requests.get(thumbnail_url, timeout=5) # 썸네일 이미지 다운로드 (5초 타임아웃)
-                response.raise_for_status() # HTTP 오류 (4xx, 5xx)가 발생하면 예외 발생
-                img_data = response.content # 이미지 데이터를 바이트 형태로 가져옵니다.
-                    
-                # Pillow를 사용하여 이미지 데이터 열기, 크기 조정, Tkinter 호환 형식으로 변환
-                img = Image.open(BytesIO(img_data))
-                img = img.resize((120, 90), Image.Resampling.LANCZOS) # 썸네일 크기를 120x90으로 조정
-                tk_img = ImageTk.PhotoImage(img)
+                try:
+                    response = requests.get(thumbnail_url, timeout=5) # 썸네일 이미지 다운로드 (5초 타임아웃)
+                    response.raise_for_status() # HTTP 오류 (4xx, 5xx)가 발생하면 예외 발생
+                    img_data = response.content # 이미지 데이터를 바이트 형태로 가져옵니다.
+                        
+                    # Pillow를 사용하여 이미지 데이터 열기, 크기 조정, Tkinter 호환 형식으로 변환
+                    img = Image.open(BytesIO(img_data))
+                    img = img.resize((120, 90), Image.Resampling.LANCZOS) # 썸네일 크기를 120x90으로 조정
+                    tk_img = ImageTk.PhotoImage(img)
+                except requests.exceptions.RequestException as e:
+                    print(f"썸네일 로드 오류: {e}")
+                    tk_img = self.placeholder_img # 오류 발생 시 플레이스홀더 사용
             else:
                 tk_img = self.placeholder_img # URL이 없을 경우에도 플레이스홀더 사용
 
@@ -265,10 +252,10 @@ class YTVHApp(tk.Tk):
 
             # **[5] 유튜브 링크 열기 버튼 (선택 사항)**
             video_url = video_info.get("video_url") # 유튜브 영상 URL 형식
-            tk.Button(info_frame, text="보기", command=lambda url=video_url: webbrowser.open(url), cursor="hand2").pack(anchor="e", pady=5)
+            tk.Button(info_frame, text="보기", command=lambda url=video_url: webbrowser.open(url) if url else None, cursor="hand2").pack(anchor="e", pady=5)
             
         # **[6] 모든 위젯 배치 후 스크롤 영역 업데이트**
-        # 이 부분이 없으면 스크롤바가 제대로 작동하지 않을 수 있습니다.
+        # 수정: 현재 활성화된 canvas가 있을 경우에만 업데이트
         if self.video_canvas: 
             self.video_canvas.update_idletasks() 
             self.video_canvas.configure(scrollregion=self.video_canvas.bbox("all")) 
@@ -292,16 +279,14 @@ class YTVHApp(tk.Tk):
 
 
     def apply_video_filter(self):
-        # ... (기존 apply_video_filter 함수 코드) ...
-        # (생략: 기존 apply_video_filter 함수 내용은 그대로 두시면 됩니다.)
-        self.total_filtered_videos = list(self.video_info_list) 
+        self.total_filtered_videos = self.video_info_list
 
         if self.subscribed_only_var.get():
             self.total_filtered_videos = sub_filter(self.total_filtered_videos)
-        if self.selected_date_entry.get().strip():
+        if self.selected_date_entry and self.selected_date_entry.get().strip(): # 필터 위젯이 생성되었는지 확인
             print(f"디버그: 날짜 필터 - 입력된 날짜: '{self.selected_date_entry.get().strip()}'")
             self.total_filtered_videos = date_filter(self.total_filtered_videos, self.selected_date_entry.get().strip())
-        if self.selected_channel_entry.get().strip():
+        if self.selected_channel_entry and self.selected_channel_entry.get().strip(): # 필터 위젯이 생성되었는지 확인
             print(f"디버그: 채널 필터 - 입력된 채널: '{self.selected_channel_entry.get().strip()}'")
             self.total_filtered_videos = channel_filter(self.total_filtered_videos, self.selected_channel_entry.get().strip())
         if self.selected_category_var.get() != "none":
@@ -312,7 +297,7 @@ class YTVHApp(tk.Tk):
         self.load_current_video_page()
 
     def apply_video_filter2(self):
-        self.total_filtered_videos = list(self.liked_video_info_list) 
+        self.total_filtered_videos = self.liked_video_info_list
 
         if self.selected_channel_var.get() != "<전체>":
             self.total_filtered_videos = channel_filter(self.total_filtered_videos, self.selected_channel_var.get())
@@ -328,7 +313,10 @@ class YTVHApp(tk.Tk):
         # 전체 필터링된 영상 목록에서 현재 페이지에 해당하는 부분만 잘라냅니다.
         videos_to_show = self.total_filtered_videos[start_index:end_index]
         
-        self.display_videos(videos_to_show, self.video_scrollable_frame)
+        # 수정: self.video_scrollable_frame은 show_page에서 현재 활성화된 페이지의 스크롤 프레임으로 할당됨
+        if self.video_scrollable_frame: 
+            self.display_videos(videos_to_show, self.video_scrollable_frame)
+        
         # 페이지 정보 레이블 업데이트
         total_pages = (len(self.total_filtered_videos) + self.videos_per_page - 1) // self.videos_per_page
         if total_pages == 0: # 영상이 없을 때 0/0으로 표시되도록
@@ -357,26 +345,44 @@ class YTVHApp(tk.Tk):
         total_pages = (len(self.total_filtered_videos) + self.videos_per_page - 1) // self.videos_per_page
 
         # 이전 버튼 활성화/비활성화
-        if self.prev_page_button: 
+        if self.prev_page_button: # 버튼이 존재할 때만 설정
             if self.current_video_page <= 0:
                 self.prev_page_button.config(state="disabled")
             else:
                 self.prev_page_button.config(state="normal")
         
         # 다음 버튼 활성화/비활성화
-        if self.next_page_button: 
+        if self.next_page_button: # 버튼이 존재할 때만 설정
             if self.current_video_page >= total_pages - 1 or total_pages == 0:
                 self.next_page_button.config(state="disabled")
             else:
                 self.next_page_button.config(state="normal")
         
         # 페이지 정보 레이블 업데이트 (load_current_video_page에서도 업데이트되지만, 안전을 위해 여기에 다시 호출)
-        if self.page_info_label: 
+        if self.page_info_label: # 레이블이 존재할 때만 설정
             if total_pages == 0:
                 self.page_info_label.config(text="페이지: 0/0")
             else:
                 self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
 
+    def update_subscribed_channels_radio_buttons(self):
+        """create_run_page3에 있는 구독 채널 라디오 버튼을 업데이트합니다."""
+        if not self.subscribed_channels_radio_frame:
+            # 아직 프레임이 생성되지 않았다면 아무것도 하지 않습니다.
+            return
+        
+        # 기존 버튼들을 모두 제거
+        for widget in self.subscribed_channels_radio_frame.winfo_children():
+            widget.destroy()
+
+        # `<전체>` 옵션이 없으면 추가
+        # 수정: <전체> 옵션 중복 추가 방지
+        if "<전체>" not in self.sub_list:
+            self.sub_list.append("<전체>")
+        
+        # 새로운 라디오 버튼 생성
+        for channel_name in self.sub_list:
+            tk.Radiobutton(self.subscribed_channels_radio_frame, text=channel_name, variable=self.selected_channel_var , value=channel_name).pack(anchor="w", padx=5, pady=1)
 
     def guest_user_login(self):
         self.youtube = guest_login()
@@ -394,22 +400,40 @@ class YTVHApp(tk.Tk):
         self.compare_mod = "friend"
         self.next_page()
     
-    def file_loading(self):
+    def file_loading(self): # 함수에서 함수 호출하는 식으로 코드 줄이기!!
         # 파일 경로 받기
         takeout_file_path = askopenfilename(
             title="테이크아웃 파일 선택",
             filetypes=[("JSON files", "*.json")]
         )
-        sub_linfo_file_path = takeout_file_path[:-16] + "구독정보\\구독정보.csv"
-    
+        # 예외 처리: 사용자가 파일을 선택하지 않고 닫았을 때
+        if not takeout_file_path:
+            print("파일 선택이 취소되었습니다.")
+            return
+
+        # Windows 경로 호환성 고려 (Takeout 폴더 구조에 따라 다를 수 있음)
+        # 일반적으로 history 파일이 있는 경로에서 "Takeout/내 활동/YouTube/"를 잘라내고 "구독정보/"를 붙임
+        # 더 안전한 방법은 os.path.join을 사용하는 것입니다.
+        import os
+        takeout_dir = os.path.dirname(takeout_file_path)
+        # '내 활동'이 포함된 상위 디렉토리를 찾거나, 고정된 구조라고 가정
+        # 예시: C:/Users/사용자/Downloads/takeout-20230101T000000Z/Takeout/내 활동/YouTube/시청 기록/시청 기록.json
+        #      -> C:/Users/사용자/Downloads/takeout-20230101T000000Z/Takeout/구독정보/구독정보.csv
+        base_takeout_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(takeout_file_path))))
+        sub_linfo_file_path = os.path.join(base_takeout_path, "구독정보", "구독정보.csv")
+
         # json 파일 리스트로 변환
         self.takeout = load_json(takeout_file_path)
         # 쇼츠 영상 제외
         self.not_shorts_takeout = not_short_filter(self.takeout)
         print("테이크 아웃 파일 불러오기 완료")
         # 구독자 정보 얻기
-        self.sub_list = get_sub_list(sub_linfo_file_path)
-
+        try:
+            self.sub_list = get_sub_list(sub_linfo_file_path)
+        except FileNotFoundError:
+            print(f"경고: 구독 정보 파일 '{sub_linfo_file_path}'를 찾을 수 없습니다. 구독 정보 필터링을 사용할 수 없습니다.")
+            self.sub_list = [] # 구독 정보 없으면 빈 리스트로 초기화
+        
         # 영상 id 추출(쇼츠 제외만)
         video_ids = extract_video_ids_from_watch_history(self.not_shorts_takeout)
         print("아이디 추출 완료")
@@ -433,13 +457,21 @@ class YTVHApp(tk.Tk):
 
         self.next_button.config(state="normal")
 
+        # run 페이지 프레임들 생성
+        # 이 시점에 각 페이지에서 비디오 위젯을 생성하도록 호출
         run_page_frames = {
             0 : self.create_run_page0(),
             1 : self.create_run_page1(),
-            2 : self.create_run_page2(),
+            2 : self.create_run_page2(), 
             3 : self.create_run_page3()
         }
         self.pages["run"] = run_page_frames
+
+        # 구독 채널 라디오 버튼 업데이트 (self.sub_list가 채워진 후)
+        self.update_subscribed_channels_radio_buttons() # 이 함수를 호출해야 라디오 버튼이 생성됨
+
+        # 파일 로딩 완료 후 바로 run 페이지 2 (일반 영상 보기)로 이동
+        self.show_page("run", 2) 
 
            
     def create_start_frame0(self):
@@ -494,33 +526,29 @@ class YTVHApp(tk.Tk):
     def create_run_page2(self):
         frame = tk.Frame(self)
         # **[1] 좌측 필터 프레임과 우측 영상 표시 컨테이너 프레임을 나눕니다.**
-        # `side="left"`와 `side="right"`를 사용하여 좌우로 배치합니다.
-        filter_frame = tk.Frame(frame, bd=2, relief="groove", width=200) # 필터링 영역 (테두리 및 고정 너비)
-        filter_frame.pack(side="left", fill="y", padx=10, pady=10) # y축으로 채우기
-        filter_frame.pack_propagate(False) # 이 프레임의 크기가 자식 위젯에 의해 변경되지 않도록 고정
-
-        video_display_container_frame = tk.Frame(frame) # 비디오 목록을 담을 컨테이너
-        video_display_container_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10) # 남은 공간을 모두 채우고 확장 가능하게
+        self.filter_frame_for_run2 = tk.Frame(frame, bd=2, relief="groove", width=200) 
+        self.filter_frame_for_run2.pack(side="left", fill="y", padx=10, pady=10) 
+        self.filter_frame_for_run2.pack_propagate(False) 
 
         # --- 왼쪽 컬럼: 필터링 옵션 ---
-        tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
+        tk.Label(self.filter_frame_for_run2, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
 
         # 1. 구독한 채널 필터 (체크박스)
-        tk.Checkbutton(filter_frame, text="구독한 채널만 보기", variable=self.subscribed_only_var).pack(anchor="w", padx=5, pady=2)
+        tk.Checkbutton(self.filter_frame_for_run2, text="구독한 채널만 보기", variable=self.subscribed_only_var).pack(anchor="w", padx=5, pady=2)
         
         # 2. 선택한 날짜 필터 (입력 필드)
-        tk.Label(filter_frame, text="날짜 선택 (YYYY-MM-DD):").pack(anchor="w", padx=5, pady=2)
-        self.selected_date_entry = tk.Entry(filter_frame)
+        tk.Label(self.filter_frame_for_run2, text="날짜 선택 (YYYY-MM-DD):").pack(anchor="w", padx=5, pady=2)
+        self.selected_date_entry = tk.Entry(self.filter_frame_for_run2)
         self.selected_date_entry.pack(fill="x", padx=5, pady=2)
 
         # 3. 선택한 채널 필터 (입력 필드)
-        tk.Label(filter_frame, text="채널 이름 입력:").pack(anchor="w", padx=5, pady=2)
-        self.selected_channel_entry = tk.Entry(filter_frame)
+        tk.Label(self.filter_frame_for_run2, text="채널 이름 입력:").pack(anchor="w", padx=5, pady=2)
+        self.selected_channel_entry = tk.Entry(self.filter_frame_for_run2)
         self.selected_channel_entry.pack(fill="x", padx=5, pady=2)
 
 
         # 4. 선택한 카테고리 필터 (라디오 버튼)
-        tk.Label(filter_frame, text="카테고리 선택:").pack(anchor="w", padx=5, pady=2)
+        tk.Label(self.filter_frame_for_run2, text="카테고리 선택:").pack(anchor="w", padx=5, pady=2)
         self.categories = {
             "none": "선택 안 함",
             "1": "Film & Animation",
@@ -539,20 +567,20 @@ class YTVHApp(tk.Tk):
             "29": "Nonprofits & Activism"
         }
         for category_id, category_name in self.categories.items():
-            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_id).pack(anchor="w", padx=5, pady=1)
+            tk.Radiobutton(self.filter_frame_for_run2, text=category_name, variable=self.selected_category_var, value=category_id).pack(anchor="w", padx=5, pady=1)
 
         # 5. 플랫폼 필터 (라디오 버튼)
-        tk.Label(filter_frame, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=10)
+        tk.Label(self.filter_frame_for_run2, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=10)
 
-        tk.Radiobutton(filter_frame, text="YouTube", variable=self.selected_platform_var, value="YouTube").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(self.filter_frame_for_run2, text="YouTube", variable=self.selected_platform_var, value="YouTube").pack(anchor="w", padx=5, pady=2)
 
-        tk.Radiobutton(filter_frame, text="YouTube Music", variable=self.selected_platform_var, value="YouTube Music").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(self.filter_frame_for_run2, text="YouTube Music", variable=self.selected_platform_var, value="YouTube Music").pack(anchor="w", padx=5, pady=2)
         
         # --- 완료 버튼 (모든 필터 설정을 적용) ---
-        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=15, fill="x")
+        tk.Button(self.filter_frame_for_run2, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=15, fill="x")
         
-        # --- 오른쪽 컬럼: 비디오 표시 영역 및 페이지네이션 컨트롤 ---
-        self.create_video_display_widgets(frame, 'run2')
+        # 수정: 이 페이지의 고유한 비디오 표시 컨테이너 위젯들을 생성하고 self.video_display_container_frame_run2에 할당
+        self.create_common_video_display_widgets(frame, 'run2')
 
         # 뒤로가기 버튼은 맨 아래에 배치
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
@@ -562,26 +590,26 @@ class YTVHApp(tk.Tk):
     def create_run_page3(self):
         frame = tk.Frame(self)
 
-        filter_frame = tk.Frame(frame, bd=2, relief="groove", width=200)
-        filter_frame.pack(side="left", fill="y", padx=10, pady=10)
-        filter_frame.pack_propagate(False)
-
-        video_display_container_frame = tk.Frame(frame)
-        video_display_container_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        self.filter_frame_for_run3 = tk.Frame(frame, bd=2, relief="groove", width=200) 
+        self.filter_frame_for_run3.pack(side="left", fill="y", padx=10, pady=10)
+        self.filter_frame_for_run3.pack_propagate(False)
 
         # --- 왼쪽 컬럼: 필터링 옵션 ---
-        tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
+        tk.Label(self.filter_frame_for_run3, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
 
-        tk.Label(filter_frame, text="채널 선택:").pack(anchor="w", padx=5, pady=2)
-        self.sub_list.append("<전체>")
-        for channel_name in self.sub_list:
-            tk.Radiobutton(filter_frame, text=channel_name, variable=self.selected_channel_var , value=channel_name).pack(anchor="w", padx=5, pady=1)
+        tk.Label(self.filter_frame_for_run3, text="채널 선택:").pack(anchor="w", padx=5, pady=2)
+        
+        # 구독 채널 라디오 버튼을 담을 프레임 (초기화)
+        # 수정: 구독 채널 라디오 버튼을 담을 프레임을 self.subscribed_channels_radio_frame에 할당
+        self.subscribed_channels_radio_frame = tk.Frame(self.filter_frame_for_run3)
+        self.subscribed_channels_radio_frame.pack(anchor="w", padx=5, pady=2, fill="both", expand=True)
 
         # --- 완료 버튼 (모든 필터 설정을 적용) ---
-        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter2).pack(anchor="w", padx=5, pady=15, fill="x")
+        tk.Button(self.filter_frame_for_run3, text="필터 적용", command=self.apply_video_filter2).pack(anchor="w", padx=5, pady=15, fill="x")
 
        # 우측 비디오 표시 컨테이너 (공통 함수로 생성)
-        self.create_video_display_widgets(frame, 'run3')
+        # 수정: 이 페이지의 고유한 비디오 표시 컨테이너 위젯들을 생성하고 self.video_display_container_frame_run3에 할당
+        self.create_common_video_display_widgets(frame, 'run3')
 
         # 뒤로가기 버튼은 맨 아래에 배치
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
