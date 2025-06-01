@@ -22,7 +22,7 @@ class YTVHApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("YTVH - YouTube View History Analyzer")
-        self.geometry("800x600")
+        self.geometry("900x800")
 
         # 각종 변수 초기화
         # 영상 관련 리스트 초기화
@@ -111,43 +111,21 @@ class YTVHApp(tk.Tk):
             self.next_page_button_run3 = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
             self.next_page_button_run3.pack(side="left", padx=5)
         
-        # 수정: Canvas와 Scrollbar, Scrollable Frame은 각 페이지마다 고유하게 가집니다.
-        # 따라서 멤버 변수에 할당할 때 page_type에 따라 구분합니다.
-        video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0")
-        video_display_scrollbar = tk.Scrollbar(video_display_container_frame, orient="vertical", command=video_canvas.yview)
-        video_scrollable_frame = tk.Frame(video_canvas, background="#f0f0f0")
+        # **스크롤 기능 제거: Canvas와 Scrollbar 대신 Frame을 직접 사용**
+        video_scrollable_frame = tk.Frame(video_display_container_frame, background="#f0f0f0")
+        video_scrollable_frame.pack(side="left", fill="both", expand=True) # 이제 이 프레임이 직접 채워집니다.
 
-        video_scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.video_canvas.configure(
-                scrollregion=self.video_canvas.bbox("all")
-            )
-        )
-
-         # **[5] 스크롤 가능 프레임을 Canvas 안에 "윈도우"로 추가합니다.**
-        # (0, 0)은 Canvas의 왼쪽 위 모서리입니다. `anchor="nw"`는 프레임의 왼쪽 위를 Canvas의 (0,0)에 맞춥니다.
-        video_canvas.create_window((0, 0), window=video_scrollable_frame, anchor="nw")
-        
-        # **[6] Canvas에 스크롤바를 연결합니다.**
-        # `yscrollcommand`는 Canvas의 Y축 스크롤을 Scrollbar의 `set` 메서드와 연결합니다.
-        video_canvas.configure(yscrollcommand=video_display_scrollbar.set)
-
-        # **[7] Canvas와 Scrollbar를 화면에 배치합니다.**
-        video_canvas.pack(side="left", fill="both", expand=True) # Canvas가 왼쪽을 채우고 확장 가능하게
-        video_display_scrollbar.pack(side="right", fill="y") # Scrollbar가 Canvas 오른쪽에 붙어 세로로 채우게
-        
-        # 수정: 각 페이지별 멤버 변수에 할당하여 충돌 방지
+        # 각 페이지별 멤버 변수에 할당 (video_canvas와 video_display_scrollbar는 이제 None으로 설정)
         if page_type == 'run2':
             self.video_display_container_frame_run2 = video_display_container_frame
-            self.video_canvas_run2 = video_canvas
-            self.video_display_scrollbar_run2 = video_display_scrollbar
+            self.video_canvas_run2 = None  # Canvas 제거
+            self.video_display_scrollbar_run2 = None # Scrollbar 제거
             self.video_scrollable_frame_run2 = video_scrollable_frame
         elif page_type == 'run3':
             self.video_display_container_frame_run3 = video_display_container_frame
-            self.video_canvas_run3 = video_canvas
-            self.video_display_scrollbar_run3 = video_display_scrollbar
+            self.video_canvas_run3 = None  # Canvas 제거
+            self.video_display_scrollbar_run3 = None # Scrollbar 제거
             self.video_scrollable_frame_run3 = video_scrollable_frame
-        
         return video_display_container_frame
 
 
@@ -266,12 +244,6 @@ class YTVHApp(tk.Tk):
             # **[5] 유튜브 링크 열기 버튼 (선택 사항)**
             video_url = video_info.get("video_url") # 유튜브 영상 URL 형식
             tk.Button(info_frame, text="보기", command=lambda url=video_url: webbrowser.open(url), cursor="hand2").pack(anchor="e", pady=5)
-            
-        # **[6] 모든 위젯 배치 후 스크롤 영역 업데이트**
-        # 이 부분이 없으면 스크롤바가 제대로 작동하지 않을 수 있습니다.
-        if self.video_canvas: 
-            self.video_canvas.update_idletasks() 
-            self.video_canvas.configure(scrollregion=self.video_canvas.bbox("all")) 
 
         self.update_pagination_buttons()
         
@@ -380,20 +352,16 @@ class YTVHApp(tk.Tk):
 
     def guest_user_login(self):
         self.youtube = guest_login()
+        self.authority = "guest"
         self.next_page()
 
     def teste_user_login(self):
         self.youtube = tester_login()
+        self.authority = "tester"
+        # 좋아요한 영상 정보
+        self.liked_video_info_list = extract_video_info_from_liked_playlist(self.youtube)
         self.next_page()
-
-    def compare_mine(self):
-        self.compare_mod = "mine"
-        self.next_page()
-    
-    def compare_friend(self):
-        self.compare_mod = "friend"
-        self.next_page()
-    
+   
     def file_loading(self):
         # 파일 경로 받기
         takeout_file_path = askopenfilename(
@@ -418,9 +386,6 @@ class YTVHApp(tk.Tk):
         self.video_info_list = get_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
         print("영상 정보 호출 완료")
 
-        # 좋아요한 영상 정보
-        self.liked_video_info_list = extract_video_info_from_liked_playlist(self.youtube)
-
         # 통계 자료 얻기
         self.statistics = make_statistics(self.takeout, self.not_shorts_takeout, self.video_info_list, self.liked_video_info_list)
 
@@ -437,8 +402,10 @@ class YTVHApp(tk.Tk):
             0 : self.create_run_page0(),
             1 : self.create_run_page1(),
             2 : self.create_run_page2(),
-            3 : self.create_run_page3()
         }
+        if self.authority == "tester":
+            run_page_frames[3] = self.create_run_page3()
+
         self.pages["run"] = run_page_frames
 
            
@@ -473,8 +440,13 @@ class YTVHApp(tk.Tk):
                   command=lambda: self.show_page(self.current_page, 1)).pack(pady=10)
         tk.Button(frame, text="2. 일반 영상 보기", width=20, height=2,
                   command=lambda: self.show_page(self.current_page, 2)).pack(pady=10)
+        if self.authority == "tester":
+            liked_video_button_state = "normal"
+        else:
+            liked_video_button_state = "disabled"
         tk.Button(frame, text="3. 좋아요 영상 보기", width=20, height=2,
-                  command=lambda: self.show_page(self.current_page, 3)).pack(pady=10)
+                  command=lambda: self.show_page(self.current_page, 3),
+                  state=liked_video_button_state).pack(pady=10)
 
         return frame
     

@@ -101,45 +101,20 @@ class YTVHApp(tk.Tk):
         self.next_page_button = tk.Button(pagination_control_frame, text="다음", command=self.go_next_video_page, state="disabled")
         self.next_page_button.pack(side="left", padx=5)
 
-        # 스크롤 가능한 영역을 만들기 위한 tk.Canvas 및 tk.Scrollbar
-        # Canvas는 그림을 그릴 수 있는 영역이자, 스크롤 가능한 "창" 역할을 합니다.
-        self.video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0")
-        
-        # 수정: Canvas와 Scrollbar, Scrollable Frame은 각 페이지마다 고유하게 가집니다.
-        # 따라서 멤버 변수에 할당할 때 page_type에 따라 구분합니다.
-        video_canvas = tk.Canvas(video_display_container_frame, borderwidth=0, background="#f0f0f0")
-        video_display_scrollbar = tk.Scrollbar(video_display_container_frame, orient="vertical", command=video_canvas.yview)
-        video_scrollable_frame = tk.Frame(video_canvas, background="#f0f0f0")
 
-        video_scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.video_canvas.configure(
-                scrollregion=self.video_canvas.bbox("all")
-            )
-        )
-
-         # **[5] 스크롤 가능 프레임을 Canvas 안에 "윈도우"로 추가합니다.**
-        # (0, 0)은 Canvas의 왼쪽 위 모서리입니다. `anchor="nw"`는 프레임의 왼쪽 위를 Canvas의 (0,0)에 맞춥니다.
-        video_canvas.create_window((0, 0), window=video_scrollable_frame, anchor="nw")
-        
-        # **[6] Canvas에 스크롤바를 연결합니다.**
-        # `yscrollcommand`는 Canvas의 Y축 스크롤을 Scrollbar의 `set` 메서드와 연결합니다.
-        video_canvas.configure(yscrollcommand=video_display_scrollbar.set)
-
-        # **[7] Canvas와 Scrollbar를 화면에 배치합니다.**
-        video_canvas.pack(side="left", fill="both", expand=True) # Canvas가 왼쪽을 채우고 확장 가능하게
-        video_display_scrollbar.pack(side="right", fill="y") # Scrollbar가 Canvas 오른쪽에 붙어 세로로 채우게
+        video_scrollable_frame = tk.Frame(video_display_container_frame, background="#f0f0f0")
+        video_scrollable_frame.pack(side="left", fill="both", expand=True) # 이제 이 프레임이 직접 채워집니다.
         
         # 수정: 각 페이지별 멤버 변수에 할당하여 충돌 방지
         if page_type == 'run2':
             self.video_display_container_frame_run2 = video_display_container_frame
-            self.video_canvas_run2 = video_canvas
-            self.video_display_scrollbar_run2 = video_display_scrollbar
+            self.video_canvas_run2 = None  # Canvas 제거
+            self.video_display_scrollbar_run2 = None # Scrollbar 제거
             self.video_scrollable_frame_run2 = video_scrollable_frame
         elif page_type == 'run3':
             self.video_display_container_frame_run3 = video_display_container_frame
-            self.video_canvas_run3 = video_canvas
-            self.video_display_scrollbar_run3 = video_display_scrollbar
+            self.video_canvas_run3 = None  # Canvas 제거
+            self.video_display_scrollbar_run3 = None # Scrollbar 제거
             self.video_scrollable_frame_run3 = video_scrollable_frame
         
         return video_display_container_frame
@@ -244,11 +219,6 @@ class YTVHApp(tk.Tk):
             # **[5] 유튜브 링크 열기 버튼 (선택 사항)**
             video_url = video_info.get("video_url") # 유튜브 영상 URL 형식
             tk.Button(info_frame, text="보기", command=lambda url=video_url: webbrowser.open(url), cursor="hand2").pack(anchor="e", pady=5)
-            
-        # **[6] 모든 위젯 배치 후 스크롤 영역 업데이트**
-        # 이 부분이 없으면 스크롤바가 제대로 작동하지 않을 수 있습니다.
-        self.video_canvas.update_idletasks() # Tkinter가 모든 위젯의 크기와 위치를 계산하도록 강제합니다.
-        self.video_canvas.configure(scrollregion=self.video_canvas.bbox("all")) # Canvas의 스크롤 영역을 모든 내용물에 맞춰 다시 설정합니다.
 
         self.update_pagination_buttons()
         
@@ -345,7 +315,6 @@ class YTVHApp(tk.Tk):
         else:
             self.next_page_button.config(state="normal")
         
-        # 페이지 정보 레이블 업데이트 (load_current_video_page에서도 업데이트되지만, 안전을 위해 여기에 다시 호출)
         if total_pages == 0:
             self.page_info_label.config(text="페이지: 0/0")
         else:
@@ -555,7 +524,7 @@ class YTVHApp(tk.Tk):
         tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter2).pack(anchor="w", padx=5, pady=15, fill="x")
 
        # 우측 비디오 표시 컨테이너 (공통 함수로 생성)
-        self.video_display_container_frame = self.create_video_display_widgets(frame, 'run3') #문제 이유
+        self.video_display_container_frame = self.create_video_display_widgets(frame, 'run3')
 
         # 뒤로가기 버튼은 맨 아래에 배치
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
