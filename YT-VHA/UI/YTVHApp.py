@@ -46,7 +46,8 @@ class YTVHApp(tk.Tk):
         self.video_display_container_frame_run2 = None 
         self.video_canvas_run2 = None                 
         self.video_display_scrollbar_run2 = None
-        self.video_scrollable_frame_run2 = None       
+        self.video_scrollable_frame_run2 = None
+        self.stats_text_widget = None
 
         self.video_display_container_frame_run3 = None 
         self.video_canvas_run3 = None                 
@@ -205,6 +206,36 @@ class YTVHApp(tk.Tk):
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
+    def show_text(self):
+        # 현재 보이는 그래프 캔버스를 숨깁니다.
+        if hasattr(self, "canvas") and self.canvas.get_tk_widget().winfo_ismapped():
+            self.canvas.get_tk_widget().pack_forget()
+
+        # 텍스트 위젯을 보이게 합니다.
+        if self.stats_text_widget:
+            self.stats_text_widget.pack(fill="both", expand=True)
+
+            # 텍스트 위젯 내용을 업데이트합니다.
+            self.stats_text_widget.config(state="normal") # 쓰기 가능하도록 변경
+            self.stats_text_widget.delete("1.0", tk.END) # 기존 내용 삭제
+
+            text_content = "--- 영상 가장 많이 본 채널 상위 10개 ---\n"
+            if "top_channel" in self.statistics:
+                for i, (channel, count) in enumerate(self.statistics["top_channel"][:10]):
+                    text_content += f"{i+1}. {channel}: {count}회\n"
+            else:
+                text_content += "데이터 없음\n"
+
+            text_content += "\n--- 좋아요한 영상 중 가장 많이 본 채널 상위 10개 ---\n"
+            if "top_liked_channe" in self.statistics: # 오타 'channe' 주의 (JSON 데이터에 따라)
+                for i, (channel, count) in enumerate(self.statistics["top_liked_channe"][:10]):
+                    text_content += f"{i+1}. {channel}: {count}회\n"
+            else:
+                text_content += "데이터 없음\n"
+
+            self.stats_text_widget.insert(tk.END, text_content)
+            self.stats_text_widget.config(state="disabled") # 다시 읽기 전용으로 변경
+
     def display_videos(self, video_info_list, parent_frame):
         # **[1] 기존에 표시된 비디오 위젯들을 모두 지웁니다.**
         # 이 부분이 중요합니다. 새 목록을 표시할 때 이전 목록이 남아있지 않도록 합니다.
@@ -502,6 +533,7 @@ class YTVHApp(tk.Tk):
         tk.Label(stats_filter_frame, text="통계 종류", font=("Arial", 12, "bold")).pack(pady=10)
 
         # 각 통계 버튼을 왼쪽 필터 프레임에 배치
+        tk.Button(stats_filter_frame, text="채널 통계 보기", command=self.show_text).pack(fill="x", padx=5, pady=15)
         tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
@@ -513,6 +545,7 @@ class YTVHApp(tk.Tk):
         # --- 오른쪽 컬럼: 그래프 표시 영역 ---
         self.graph_display_frame = tk.Frame(frame)
         self.graph_display_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        self.stats_text_widget = tk.Text(self.graph_display_frame, wrap="word", state="disabled", font=("Arial", 12))
 
         # 초기에는
         self.canvas = FigureCanvasTkAgg(self.grapes["shorts_distribution"], master = self.graph_display_frame)
