@@ -1,8 +1,8 @@
 import json
 from open_file.extract_video_ids import is_id
 
-def load_json(json_path):
-    with open(json_path, "r", encoding="utf-8") as f: #with 문 안에 있는 코드 실행 후, 자동으로 파일 닫아준다.
+def load_takeout_file(load_takeout_file_path):
+    with open(load_takeout_file_path, "r", encoding="utf-8") as f: #with 문 안에 있는 코드 실행 후, 자동으로 파일 닫아준다.
         data = json.load(f) #load()는 파이썬의 리스트나 딕셔너리 자료형으로 바꿔준다.
     
     filtered_data = []
@@ -20,6 +20,14 @@ def load_json(json_path):
             filtered_data.append(item)
 
     return filtered_data
+
+
+def load_save_file(save_file_path):
+    with open(save_file_path, "r", encoding="utf-8") as f: #with 문 안에 있는 코드 실행 후, 자동으로 파일 닫아준다.
+        data = json.load(f) #load()는 파이썬의 리스트나 딕셔너리 자료형으로 바꿔준다.
+
+    return data
+
 '''
 [
   {

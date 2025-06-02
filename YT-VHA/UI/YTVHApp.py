@@ -7,12 +7,12 @@ import webbrowser
 from yt_api.get_yt_ob import tester_login, guest_login
 from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
 from open_file.get_sub_list import get_sub_list
-from open_file.json_loader import load_json # takeout 파일 여는 함수
+from open_file.json_loader import load_takeout_file, load_save_file # takeout 파일 여는 함수 
 from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 함수
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
-from save_file.save_statistics import save_all_data_to_file
+from save_file import save_all_data_to_file
 from grape import make_grapes, empty_grape
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -363,7 +363,33 @@ class YTVHApp(tk.Tk):
         # 좋아요한 영상 정보
         self.liked_video_info_list = extract_video_info_from_liked_playlist(self.youtube)
         self.next_page()
-   
+
+    def save_file_loading(self):
+        save_file_path = askopenfilename(
+            title="저장한 파일 선택",
+            filetypes=[("JSON files", "*.json")]
+        )
+        save_file = load_save_file(save_file_path)
+
+        self.statistics = save_file["statistics"]
+        self.sub_list = save_file["sub_list"]
+        self.liked_video_info_list = save_file["liked_video_info_list"]
+        self.video_info_list = save_file["video_info_list"]
+        
+        self.grapes = make_grapes(self.statistics)
+
+        self.next_button.config(state="normal")
+
+        run_page_frames = {
+            0 : self.create_run_page0(),
+            1 : self.create_run_page1(),
+            2 : self.create_run_page2(),
+        }
+        if self.authority == "tester":
+            run_page_frames[3] = self.create_run_page3()
+
+        self.pages["run"] = run_page_frames
+
     def file_loading(self):
         # 파일 경로 받기
         takeout_file_path = askopenfilename(
@@ -373,7 +399,7 @@ class YTVHApp(tk.Tk):
         sub_linfo_file_path = takeout_file_path[:-16] + "구독정보\\구독정보.csv"
     
         # json 파일 리스트로 변환
-        self.takeout = load_json(takeout_file_path)
+        self.takeout = load_takeout_file(takeout_file_path)
         # 쇼츠 영상 제외
         self.not_shorts_takeout = not_short_filter(self.takeout)
         print("테이크 아웃 파일 불러오기 완료")
@@ -421,7 +447,8 @@ class YTVHApp(tk.Tk):
     def create_start_frame1(self):
         frame = tk.Frame(self)
         tk.Label(frame, text="테이크아웃 파일 불러오기", font=("Arial", 16)).pack(pady=20)
-        tk.Button(frame, text="파일 올리기", width=20, height=2, command= self.file_loading).pack(pady=5)
+        tk.Button(frame, text="시청 기록.json 파일 올리기", width=20, height=2, command= self.file_loading).pack(pady=5)
+        tk.Button(frame, text="save_file.json 파일 올리기", width=20, height=2, command= self.save_file_loading).pack(pady=5)
         link_label = tk.Label(frame, text="테이크아웃 링크 열기", fg="blue", cursor="hand2", font=("Arial", 12, "underline"))
         link_label.pack(pady=5)
         link_label.bind("<Button-1>", lambda e: webbrowser.open("https://takeout.google.com/"))
@@ -452,16 +479,36 @@ class YTVHApp(tk.Tk):
         return frame
     
     def create_run_page1(self):
-        frame = tk.Frame(self)
-        self.canvas = FigureCanvasTkAgg(empty_grape, master = frame)
-        tk.Label(frame, text=f"통계창", font=("Arial", 20)).pack(pady=100)
-        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack()
-        tk.Button(frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", frame)).pack()
-        tk.Button(frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", frame)).pack()
-        tk.Button(frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", frame, "not_shorts")).pack()
-        tk.Button(frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", frame, "not_shorts")).pack()
-        tk.Button(frame, text="날짜별 영상 개수: 달", command=lambda: self.show_grape("month_date_distribution", frame, "not_shorts")).pack()
-        tk.Button(frame, text="날짜별 영상 개수: 요일", command=lambda: self.show_grape("weekDay_date_distribution", frame, "not_shorts")).pack()
+        frame = tk.Frame(self) # 전체 페이지를 담을 메인 프레임
+
+        # --- 왼쪽 컬럼: 통계 종류 선택 버튼들 ---
+        stats_filter_frame = tk.Frame(frame, bd=2, relief="groove", width=200)
+        stats_filter_frame.pack(side="left", fill="y", padx=10, pady=10)
+        stats_filter_frame.pack_propagate(False) # 프레임 크기가 내용에 따라 늘어나지 않도록 고정
+
+        tk.Label(stats_filter_frame, text="통계 종류", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # 각 통계 버튼을 왼쪽 필터 프레임에 배치
+        tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 달", command=lambda: self.show_grape("month_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 요일", command=lambda: self.show_grape("weekDay_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
+
+
+        # --- 오른쪽 컬럼: 그래프 표시 영역 ---
+        self.graph_display_frame = tk.Frame(frame)
+        self.graph_display_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+
+        # 초기에는 비어 있는 그래프를 오른쪽에 표시
+        self.canvas = FigureCanvasTkAgg(empty_grape, master = self.graph_display_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, pady=20, expand=True) #위아래 공백 조정
+
+        # 뒤로가기 버튼은 메인 프레임의 바닥에 배치
+        tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)
+
         return frame
     
     def create_run_page2(self):
