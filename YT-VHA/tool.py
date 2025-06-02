@@ -52,9 +52,9 @@ def is_short(item):
 
     # 60초 이하면 쇼츠로 판단
     if sec <= 60:
-        return "short"
+        return "shorts"
     else:
-        return "notShort"
+        return "not shorts"
 
 
 # 구독한 채널의 영상인지 판별하는 함수

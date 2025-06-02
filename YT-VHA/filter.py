@@ -30,6 +30,15 @@ def not_short_filter(takeout):
     
     return not_short_takeout
 
+def video_sort_filter(like_video_info_list, select_sort):
+    filtered_viedio_info_list = []
+    for item in like_video_info_list:
+        if item["isShorts"] == select_sort:
+            filtered_viedio_info_list.append(item)
+    
+    return filtered_viedio_info_list
+
+
 
 # 유튜브 뮤직에서 본 영상과 유튜브에서 본 영상 분류하는 필터 함수
 # video_info_list: 응답 받은 정보 있는 파일(리스트)

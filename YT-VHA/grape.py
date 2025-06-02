@@ -1,11 +1,6 @@
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
-empty_grape = Figure(figsize=(5, 4), dpi=100)
-ax = empty_grape.add_subplot(111)
-ax.set_title("아직 데이터 없음")
-
-
 def draw_pie_chart(count1, count2, sort):
     labels = [sort, f'Not {sort}']
     sizes = [count1, count2]

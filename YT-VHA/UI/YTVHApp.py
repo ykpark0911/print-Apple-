@@ -13,7 +13,7 @@ from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
 from save_file import save_all_data_to_file
-from grape import make_grapes, empty_grape
+from grape import make_grapes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
@@ -38,6 +38,7 @@ class YTVHApp(tk.Tk):
         self.selected_category_var = tk.StringVar(value="none")
         self.selected_platform_var = tk.StringVar(value="YouTube")
         self.selected_channel_var = tk.StringVar(value="<전체>") # 좋아요 영상 필터용
+        self.selected_video_sort_var = tk.StringVar(value="<전체>")
 
         # **모든 run 페이지에서 공통으로 사용될 비디오 표시 및 페이지네이션 위젯 초기화**
         # 이 위젯들은 나중에 create_run_page2, create_run_page3에 인자로 전달하거나,
@@ -292,7 +293,8 @@ class YTVHApp(tk.Tk):
 
         if self.selected_channel_var.get() != "<전체>":
             self.total_filtered_videos = channel_filter(self.total_filtered_videos, self.selected_channel_var.get())
-
+        if self.selected_video_sort_var.get() != "<전체>":
+            self.total_filtered_videos = video_sort_filter(self.total_filtered_videos, self.selected_video_sort_var.get())
         self.current_video_page = 0
         self.load_current_video_page()
 
@@ -378,17 +380,21 @@ class YTVHApp(tk.Tk):
         
         self.grapes = make_grapes(self.statistics)
 
-        self.next_button.config(state="normal")
+        if self.video_info_list != []:
+            self.next_button.config(state="normal")
+            self.takeout_upload_button.config(state="disabled")
+            self.save_file_upload_button.config(state="disabled")
+            run_page_frames = {
+                0 : self.create_run_page0(),
+                1 : self.create_run_page1(),
+                2 : self.create_run_page2(),
+            }
+            if self.authority == "tester":
+                run_page_frames[3] = self.create_run_page3()
 
-        run_page_frames = {
-            0 : self.create_run_page0(),
-            1 : self.create_run_page1(),
-            2 : self.create_run_page2(),
-        }
-        if self.authority == "tester":
-            run_page_frames[3] = self.create_run_page3()
-
-        self.pages["run"] = run_page_frames
+            self.pages["run"] = run_page_frames
+        else:
+            print("파일 오류")
 
     def file_loading(self):
         # 파일 경로 받기
@@ -405,6 +411,7 @@ class YTVHApp(tk.Tk):
         print("테이크 아웃 파일 불러오기 완료")
         # 구독자 정보 얻기
         self.sub_list = get_sub_list(sub_linfo_file_path)
+        self.sub_list.append("<전체>")
 
         # 영상 id 추출(쇼츠 제외만)
         video_ids = extract_video_ids_from_watch_history(self.not_shorts_takeout)
@@ -424,17 +431,21 @@ class YTVHApp(tk.Tk):
         print(f"불러온 영상: {len(self.video_info_list)}")
         print(f"총 추청 쇼츠 영상: {len(self.takeout) - len(self.video_info_list)}")
 
-        self.next_button.config(state="normal")
+        if self.video_info_list != []:
+            self.next_button.config(state="normal")
+            self.takeout_upload_button.config(state="disabled")
+            self.save_file_upload_button.config(state="disabled")
+            run_page_frames = {
+                0 : self.create_run_page0(),
+                1 : self.create_run_page1(),
+                2 : self.create_run_page2(),
+            }
+            if self.authority == "tester":
+                run_page_frames[3] = self.create_run_page3()
 
-        run_page_frames = {
-            0 : self.create_run_page0(),
-            1 : self.create_run_page1(),
-            2 : self.create_run_page2(),
-        }
-        if self.authority == "tester":
-            run_page_frames[3] = self.create_run_page3()
-
-        self.pages["run"] = run_page_frames
+            self.pages["run"] = run_page_frames
+        else:
+            print("파일 오류")
            
     def create_start_frame0(self):
         frame = tk.Frame(self)
@@ -447,8 +458,10 @@ class YTVHApp(tk.Tk):
     def create_start_frame1(self):
         frame = tk.Frame(self)
         tk.Label(frame, text="테이크아웃 파일 불러오기", font=("Arial", 16)).pack(pady=20)
-        tk.Button(frame, text="시청 기록.json 파일 올리기", width=20, height=2, command= self.file_loading).pack(pady=5)
-        tk.Button(frame, text="save_file.json 파일 올리기", width=20, height=2, command= self.save_file_loading).pack(pady=5)
+        self.takeout_upload_button = tk.Button(frame, text="시청 기록.json 파일 올리기", width=20, height=2, command= self.file_loading)
+        self.takeout_upload_button.pack(pady=5)
+        self.save_file_upload_button = tk.Button(frame, text="save_file.json 파일 올리기", width=20, height=2, command= self.save_file_loading)
+        self.save_file_upload_button.pack(pady=5)
         link_label = tk.Label(frame, text="테이크아웃 링크 열기", fg="blue", cursor="hand2", font=("Arial", 12, "underline"))
         link_label.pack(pady=5)
         link_label.bind("<Button-1>", lambda e: webbrowser.open("https://takeout.google.com/"))
@@ -501,8 +514,8 @@ class YTVHApp(tk.Tk):
         self.graph_display_frame = tk.Frame(frame)
         self.graph_display_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
-        # 초기에는 비어 있는 그래프를 오른쪽에 표시
-        self.canvas = FigureCanvasTkAgg(empty_grape, master = self.graph_display_frame)
+        # 초기에는
+        self.canvas = FigureCanvasTkAgg(self.grapes["shorts_distribution"], master = self.graph_display_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, pady=20, expand=True) #위아래 공백 조정
 
@@ -541,24 +554,24 @@ class YTVHApp(tk.Tk):
 
         # 4. 선택한 카테고리 필터 (라디오 버튼)
         tk.Label(filter_frame, text="카테고리 선택:").pack(anchor="w", padx=5, pady=2)
-        self.categories = {
-            "none": "선택 안 함",
-            "1": "Film & Animation",
-            "2": "Autos & Vehicles",
-            "10": "Music",
-            "15": "Pets & Animals",
-            "17": "Sports",
-            "20": "Gaming",
-            "22": "People & Blogs",
-            "23": "Comedy",
-            "24": "Entertainment",
-            "25": "News & Politics",
-            "26": "Howto & Style",
-            "27": "Education",
-            "28": "Science & Technology",
-            "29": "Nonprofits & Activism"
-        }
-        for category_id, category_name in self.categories.items():
+        self.categories = [
+            "none",
+            "Film & Animation",
+            "Autos & Vehicles",
+            "Music",
+            "Pets & Animals",
+            "Sports",
+            "Gaming",
+            "People & Blogs",
+            "Comedy",
+            "Entertainment",
+            "News & Politics",
+            "Howto & Style",
+            "Education",
+            "Science & Technology",
+            "Nonprofits & Activism"
+        ]
+        for category_name in self.categories:
             tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_name).pack(anchor="w", padx=5, pady=1)
 
         # 5. 플랫폼 필터 (라디오 버튼)
@@ -593,9 +606,14 @@ class YTVHApp(tk.Tk):
         tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
 
         tk.Label(filter_frame, text="채널 선택:").pack(anchor="w", padx=5, pady=2)
-        self.sub_list.append("<전체>")
         for channel_name in self.sub_list:
             tk.Radiobutton(filter_frame, text=channel_name, variable=self.selected_channel_var , value=channel_name).pack(anchor="w", padx=5, pady=1)
+
+        # 쇼츠 필터 (라디오 버튼)
+        tk.Label(filter_frame, text="쇼츠 또는 일반 영상 선택:").pack(anchor="w", padx=5, pady=10)
+        tk.Radiobutton(filter_frame, text="not shorts", variable=self.selected_video_sort_var, value="not shorts").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(filter_frame, text="shorts", variable=self.selected_video_sort_var, value="shorts").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(filter_frame, text="<전체>", variable=self.selected_video_sort_var, value="<전체>").pack(anchor="w", padx=5, pady=2)
 
         # --- 완료 버튼 (모든 필터 설정을 적용) ---
         tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter2).pack(anchor="w", padx=5, pady=15, fill="x")

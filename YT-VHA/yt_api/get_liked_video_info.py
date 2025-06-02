@@ -37,7 +37,7 @@ def extract_video_info_from_liked_playlist(youtube):
                 "channel": info["snippet"]["channelTitle"],
                 "thumbnails" : info['snippet']['thumbnails']['high'],
                 "durationSec": info["contentDetails"]["duration"],
-                "isShort": is_short(info),
+                "isShorts": is_short(info),
                 "video_url" : "https://www.youtube.com/watch?v=" + info["id"]
             }
             #like_video_info_list에 추가
@@ -55,7 +55,7 @@ def extract_video_info_from_liked_playlist(youtube):
     'category': '10',
     'channel': '휴복',
     'thumbnails': {'url': 'https://i.ytimg.com/vi/fTwZNlF9K8E/hqdefault.jpg',
-    'width': 480, 'height': 360}, 'durationSec': 273.0, 'isShort': 'notShort',
+    'width': 480, 'height': 360}, 'durationSec': 273.0, 'isShorts': 'not shorts',
     'dateTimes': [datetime.datetime(2025, 5, 19, 0, 19, 31, 433000, tzinfo=tzutc())]
     },
     {
