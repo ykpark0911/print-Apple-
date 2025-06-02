@@ -48,7 +48,7 @@ def platform_filter(video_info_list, select_platform):
 def category_filter(vedio_info_list, select_category):
     filtered_viedio_info_list = []
     for item in vedio_info_list:
-        if item.get("categoryId") == select_category:
+        if item.get("category") == select_category:
             filtered_viedio_info_list.append(item)
 
     return filtered_viedio_info_list
@@ -73,8 +73,8 @@ def date_filter(video_info_list, target_date):
     filtered_video_info_list = []
     target_datetime = datetime.strptime(target_date, "%Y-%m-%d").date() 
     for item in video_info_list:
-        dt = item.get("dateTime").date() 
-        if dt.date() == target_datetime:
+        dt = dateTime_iso8601_to_dateTime(item.get("dateTime")).date() 
+        if dt == target_datetime:
             filtered_video_info_list.append(item)
 
     return filtered_video_info_list

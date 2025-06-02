@@ -12,7 +12,7 @@ from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 �
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
-from save_file.save_statistics import save_statistics_to_file
+from save_file.save_statistics import save_all_data_to_file
 from grape import make_grapes, empty_grape
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -23,6 +23,7 @@ class YTVHApp(tk.Tk):
         super().__init__()
         self.title("YTVH - YouTube View History Analyzer")
         self.geometry("900x800")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # 각종 변수 초기화
         # 영상 관련 리스트 초기화
@@ -76,6 +77,13 @@ class YTVHApp(tk.Tk):
         self.current_page = "start"
         self.show_page("start", 0)
 
+    def on_closing(self):
+        """
+        창이 닫힐 때 호출되는 함수입니다.
+        애플리케이션을 깔끔하게 종료합니다.
+        """
+        print("애플리케이션이 종료됩니다.")
+        self.destroy() # Tkinter 윈도우와 모든 위젯을 파괴하고 mainloop를 종료합니다.
 
     def create_video_display_widgets(self, parent_frame, page_type):
         """
@@ -127,7 +135,6 @@ class YTVHApp(tk.Tk):
             self.video_display_scrollbar_run3 = None # Scrollbar 제거
             self.video_scrollable_frame_run3 = video_scrollable_frame
         return video_display_container_frame
-
 
     def show_page(self, page, index):
         # 모든 프레임을 숨깁니다.
@@ -184,7 +191,6 @@ class YTVHApp(tk.Tk):
             # 페이지네이션 초기화 및 첫 페이지 로드
             self.current_video_page = 0
     
-    # name은 "shorts_distribution" 등 ...
     def show_grape(self, grape_sort, parent_frame, include_short_or_not_key=False):
         if include_short_or_not_key:
             grape = self.grapes[grape_sort][include_short_or_not_key]
@@ -245,8 +251,7 @@ class YTVHApp(tk.Tk):
             video_url = video_info.get("video_url") # 유튜브 영상 URL 형식
             tk.Button(info_frame, text="보기", command=lambda url=video_url: webbrowser.open(url), cursor="hand2").pack(anchor="e", pady=5)
 
-        self.update_pagination_buttons()
-        
+        self.update_pagination_buttons()    
 
     def next_page(self):
         if self.current_frame_index < len(self.pages[self.current_page].values()) - 1:
@@ -259,9 +264,8 @@ class YTVHApp(tk.Tk):
             filetypes = [("JSON files", "*.json"), ("All files", "*.*")],
             title = "저장할 위치 선택"
             )
-        save_statistics_to_file(self.statistics, save_file_path)
+        save_all_data_to_file(self.statistics, self.sub_list, self.liked_video_info_list, self.video_info_list, save_file_path)
         print("저장됨")
-
 
     def apply_video_filter(self):
         # ... (기존 apply_video_filter 함수 코드) ...
@@ -307,7 +311,6 @@ class YTVHApp(tk.Tk):
             self.page_info_label.config(text="페이지: 0/0")
         else:
             self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
-    
 
     def go_next_video_page(self):
         """다음 페이지로 이동합니다."""
@@ -348,7 +351,6 @@ class YTVHApp(tk.Tk):
                 self.page_info_label.config(text="페이지: 0/0")
             else:
                 self.page_info_label.config(text=f"페이지: {self.current_video_page + 1}/{total_pages}")
-
 
     def guest_user_login(self):
         self.youtube = guest_login()
@@ -407,7 +409,6 @@ class YTVHApp(tk.Tk):
             run_page_frames[3] = self.create_run_page3()
 
         self.pages["run"] = run_page_frames
-
            
     def create_start_frame0(self):
         frame = tk.Frame(self)
@@ -511,7 +512,7 @@ class YTVHApp(tk.Tk):
             "29": "Nonprofits & Activism"
         }
         for category_id, category_name in self.categories.items():
-            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_id).pack(anchor="w", padx=5, pady=1)
+            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_name).pack(anchor="w", padx=5, pady=1)
 
         # 5. 플랫폼 필터 (라디오 버튼)
         tk.Label(filter_frame, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=10)

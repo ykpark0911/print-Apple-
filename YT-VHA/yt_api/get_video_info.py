@@ -1,6 +1,6 @@
 # ── Google API 호출을 영상 id로 영상 정보 불러오는 모듈 ──
 
-from tool import duration_iso8601_to_seconds, dateTime_iso8601_to_dateTime, get_categoryId, is_short, is_sub
+from tool import duration_iso8601_to_seconds, get_categoryId, is_short, is_sub
 
 # 영상 id를 통해 영상 정보를 호출하고, 추가로 takeout 파일에 정보를 붙이는 함수
 # 오류가 있거나 쇼츠 영상 발견시, 해당 영상을 제거(takeout 파일과 video_ids 리스트에서 실제로 삭제)
@@ -136,10 +136,10 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
                 "sub" : is_sub(info, sub_list),
                 "channel": info["snippet"]["channelTitle"],
                 "thumbnails": info['snippet']['thumbnails']['high'],
-                "durationSec": duration_iso8601_to_seconds(info["contentDetails"]["duration"]),
-                "dateTime":  dateTime_iso8601_to_dateTime(chunk_list[j]["time"]),
+                "durationSec": info["contentDetails"]["duration"],
+                "dateTime":  chunk_list[j]["time"],
                 "platform" : chunk_list[j]["header"],
-                "video_url" : chunk_list[j]["titleUrl"]
+                "video_url" : "https://www.youtube.com/watch?v=" + info["id"]
             }
             # video_info_list에 추가
             video_info_list.append(video_info)

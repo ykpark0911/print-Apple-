@@ -1,6 +1,6 @@
 # ── Google API 호출을 좋아요한 재생목록 영상과 그 정보를 불러오는 모듈 ──
 
-from tool import is_short, duration_iso8601_to_seconds, get_categoryId
+from tool import is_short, get_categoryId
 
 # 좋아요 한 영상의 정보를 불러오는 함수
 # youtube: 유튜브 객체
@@ -27,17 +27,18 @@ def extract_video_info_from_liked_playlist(youtube):
         # 요청 받은 좋아요한 영상 정보
         response = request.execute()
         # item: 응답 받은 영상의 정보(dict)를 꺼냄 예) {"kind": "youtube#video", "id": "abc123", "snippet": {"title": "파이썬 강의","channelTitle": "코딩하는 정대리““category”: "Music"}}
-        for item in response["items"]:
+        for info in response["items"]:
 
             # video_info_list에 추가할 영상 정보
             like_video_info = {
-                "id": item["id"],
-                "title": item["snippet"]["title"],
-                "category": get_categoryId(item["snippet"].get("categoryId", "0")),
-                "channel": item["snippet"]["channelTitle"],
-                "thumbnails" : item['snippet']['thumbnails']['high'],
-                "durationSec": duration_iso8601_to_seconds(item["contentDetails"]["duration"]),
-                "isShort": is_short(item),
+                "id": info["id"],
+                "title": info["snippet"]["title"],
+                "category": get_categoryId(info["snippet"].get("categoryId", "0")),
+                "channel": info["snippet"]["channelTitle"],
+                "thumbnails" : info['snippet']['thumbnails']['high'],
+                "durationSec": info["contentDetails"]["duration"],
+                "isShort": is_short(info),
+                "video_url" : "https://www.youtube.com/watch?v=" + info["id"]
             }
             #like_video_info_list에 추가
             like_video_info_list.append(like_video_info)
