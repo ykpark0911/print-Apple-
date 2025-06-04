@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 
 def draw_pie_chart(count1, count2, sort):
     labels = [sort, f'Not {sort}']
@@ -24,20 +23,8 @@ def plot_hour_distribution(hours, counts):
 
     return fig
 
-
-def plot_date_distribution(dates, counts):
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(dates, counts, marker='o', linestyle='-', color='green')
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Number of videos watched")
-    ax.set_title("Distribution of videos viewed by date")
-    plt.xticks(rotation=45)  # 간단하게 회전만 지정
-    ax.grid(True, linestyle='--', alpha=0.7)
-
-    return fig
-
 def plot_date_distribution(dates, counts, title_suffix):
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(dates, counts, marker='o', linestyle='-', color='green')
     ax.set_xlabel("Date")
     ax.set_ylabel("Number of videos watched")
@@ -56,7 +43,7 @@ def plot_category_distribution(categories, counts):
         categories (list): 카테고리 이름 리스트
         counts (list): 카테고리별 시청 횟수
     """
-    fig, ax = plt.subplots(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(12, 4))
     ax.bar(categories, counts, color='orchid')
     ax.set_xlabel("Category")
     ax.set_ylabel("Number of videos watched")
@@ -213,3 +200,26 @@ def make_compare_grapes(statistics):
     }
 
     return statistics_grape
+
+
+def make_text(statistics):
+    """
+    주어진 통계 데이터를 기반으로 채널 통계 텍스트를 생성하여 반환합니다.
+    """
+    text_content = "--- 영상 가장 많이 본 채널 상위 10개 ---\n"
+    if "top_channel" in statistics:
+        for i, (channel, count) in enumerate(statistics["top_channel"][:10]):
+            text_content += f"{i+1}. {channel}: {count}회\n"
+    else:
+        text_content += "데이터 없음\n"
+
+    text_content += "\n--- 좋아요한 영상 중 가장 많이 본 채널 상위 10개 ---\n"
+    # JSON 데이터의 오타 'channe'를 확인하고 사용합니다.
+    if "top_liked_channe" in statistics:
+        for i, (channel, count) in enumerate(statistics["top_liked_channe"][:10]):
+            text_content += f"{i+1}. {channel}: {count}회\n"
+    else:
+        text_content += "데이터 없음\n"
+
+    return text_content
+ 

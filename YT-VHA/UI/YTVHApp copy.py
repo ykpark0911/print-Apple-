@@ -13,7 +13,7 @@ from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
 from save_file import save_all_data_to_file
-from grape import make_grapes, make_text
+from grape import make_grapes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tool import dateTime_iso8601_to_dateTime
 
@@ -212,13 +212,26 @@ class YTVHApp(tk.Tk):
         # 텍스트 위젯을 보이게 합니다.
         if self.stats_text_widget:
             self.stats_text_widget.pack(fill="both", expand=True)
-            
+
             # 텍스트 위젯 내용을 업데이트합니다.
             self.stats_text_widget.config(state="normal") # 쓰기 가능하도록 변경
             self.stats_text_widget.delete("1.0", tk.END) # 기존 내용 삭제
 
-            # 수정: grape.py의 make_text 함수를 호출하여 텍스트 내용을 가져옵니다.
-            self.stats_text_widget.insert(tk.END, self.text_content)
+            text_content = "--- 영상 가장 많이 본 채널 상위 10개 ---\n"
+            if "top_channel" in self.statistics:
+                for i, (channel, count) in enumerate(self.statistics["top_channel"][:10]):
+                    text_content += f"{i+1}. {channel}: {count}회\n"
+            else:
+                text_content += "데이터 없음\n"
+
+            text_content += "\n--- 좋아요한 영상 중 가장 많이 본 채널 상위 10개 ---\n"
+            if "top_liked_channe" in self.statistics: # 오타 'channe' 주의 (JSON 데이터에 따라)
+                for i, (channel, count) in enumerate(self.statistics["top_liked_channe"][:10]):
+                    text_content += f"{i+1}. {channel}: {count}회\n"
+            else:
+                text_content += "데이터 없음\n"
+
+            self.stats_text_widget.insert(tk.END, text_content)
             self.stats_text_widget.config(state="disabled") # 다시 읽기 전용으로 변경
 
     def display_videos(self, video_info_list, parent_frame):
@@ -401,7 +414,6 @@ class YTVHApp(tk.Tk):
         self.video_info_list = save_file["video_info_list"]
         
         self.grapes = make_grapes(self.statistics)
-        self.text_content = make_text(self.statistics)
 
         if self.video_info_list != []:
             self.next_button.config(state="normal")
@@ -446,8 +458,6 @@ class YTVHApp(tk.Tk):
 
         # 통계 자료 얻기
         self.statistics = make_statistics(self.takeout, self.not_shorts_takeout, self.video_info_list, self.liked_video_info_list)
-        self.text_content = make_text(self.statistics)
-
 
         # 그래프 얻기
         self.grapes = make_grapes(self.statistics)
@@ -540,6 +550,11 @@ class YTVHApp(tk.Tk):
         self.graph_display_frame = tk.Frame(frame)
         self.graph_display_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
         self.stats_text_widget = tk.Text(self.graph_display_frame, wrap="word", state="disabled", font=("Arial", 12))
+
+        # 초기에는
+        self.canvas = FigureCanvasTkAgg(self.grapes["shorts_distribution"], master = self.graph_display_frame)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, pady=20, expand=True) #위아래 공백 조정
 
         # 뒤로가기 버튼은 메인 프레임의 바닥에 배치
         tk.Button(frame, text="🔙 뒤로가기", command=lambda: self.show_page(self.current_page, 0)).pack(side="bottom", pady=10)

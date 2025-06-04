@@ -26,9 +26,9 @@ def extract_video_info_from_liked_playlist(youtube):
 
         # 요청 받은 좋아요한 영상 정보
         response = request.execute()
+
         # item: 응답 받은 영상의 정보(dict)를 꺼냄 예) {"kind": "youtube#video", "id": "abc123", "snippet": {"title": "파이썬 강의","channelTitle": "코딩하는 정대리““category”: "Music"}}
         for info in response["items"]:
-
             # video_info_list에 추가할 영상 정보
             like_video_info = {
                 "id": info["id"],
@@ -36,7 +36,7 @@ def extract_video_info_from_liked_playlist(youtube):
                 "category": get_categoryId(info["snippet"].get("categoryId", "0")),
                 "channel": info["snippet"]["channelTitle"],
                 "thumbnails" : info['snippet']['thumbnails']['high'],
-                "durationSec": info["contentDetails"]["duration"],
+                "duration": info["contentDetails"].get("duration", "알 수 없음"),
                 "isShorts": is_short(info),
                 "video_url" : "https://www.youtube.com/watch?v=" + info["id"]
             }

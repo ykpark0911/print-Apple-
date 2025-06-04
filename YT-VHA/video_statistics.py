@@ -95,7 +95,7 @@ def get_date_distribution(takeout, group_by, average=False):
             # 주 끝(일요일)
             week_end = week_start + timedelta(days=6)
             # 포맷: YYYY년 MM월 DD일 ~ MM월 DD일
-            key = f"{week_start.year}-{week_start.month:02d}-{week_start.day:02d} ~ {week_end.month:02d}-{week_end.day:02d}"
+            key = f"{week_start.month:02d}-{week_start.day:02d} ~ {week_end.month:02d}-{week_end.day:02d}"
             dates_list[key].add(dt)
 
         elif group_by == "month":

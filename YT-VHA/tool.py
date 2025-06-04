@@ -47,7 +47,10 @@ def duration_iso8601_to_seconds(duration_iso8601):
 # item: 응답 받은 영상의 정보(dict)
 def is_short(item):
     # duration 추출
-    duration_iso8601 = item['contentDetails']['duration']
+    duration_iso8601 = item['contentDetails'].get("duration", "최초 공개 영상")
+    if duration_iso8601 == "최초 공개 영상":
+        return "최초 공개 영상"
+    
     sec = duration_iso8601_to_seconds(duration_iso8601)
 
     # 60초 이하면 쇼츠로 판단

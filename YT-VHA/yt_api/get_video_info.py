@@ -136,7 +136,7 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
                 "sub" : is_sub(info, sub_list),
                 "channel": info["snippet"]["channelTitle"],
                 "thumbnails": info['snippet']['thumbnails']['high'],
-                "durationSec": info["contentDetails"]["duration"],
+                "duration": info["contentDetails"]["duration"],
                 "dateTime":  chunk_list[j]["time"],
                 "platform" : chunk_list[j]["header"],
                 "video_url" : "https://www.youtube.com/watch?v=" + info["id"]
