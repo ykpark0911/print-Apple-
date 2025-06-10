@@ -3,7 +3,7 @@ from tkinter import ttk
 import requests
 from PIL import Image, ImageTk
 from io import BytesIO
-from tkinter.filedialog import askopenfilename, asksaveasfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename, askdirectory
 import webbrowser
 from yt_api.get_yt_ob import tester_login, guest_login
 from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
@@ -13,7 +13,7 @@ from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 �
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
-from save_file import save_all_data_to_file
+from save_file import save_all_data_to_json_file, save_all_grape
 from grape import make_grapes, make_text
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tool import dateTime_iso8601_to_dateTime
@@ -199,7 +199,7 @@ class YTVHApp(tk.Tk):
             self.canvas.get_tk_widget().destroy()
 
 
-        if grape_sort in ["shorts_distribution", "hour_distribution"]:
+        if grape_sort in ["shorts_distribution", "hour_distribution", "category_distribution"]:
             grape = self.grapes[grape_sort]
         else:     
             grape = self.grapes[grape_sort][self.include_shorts.get()]
@@ -291,7 +291,13 @@ class YTVHApp(tk.Tk):
             filetypes = [("JSON files", "*.json"), ("All files", "*.*")],
             title = "저장할 위치 선택"
             )
-        save_all_data_to_file(self.statistics, self.sub_list, self.liked_video_info_list, self.video_info_list, save_file_path)
+        save_all_data_to_json_file(self.statistics, self.sub_list, self.liked_video_info_list, self.video_info_list, save_file_path)
+        print("저장됨")
+
+    def save_action2(self):
+        save_file_path = askdirectory(title = "저장할 위치 선택")
+        save_file_path = save_file_path + "\\"
+        save_all_grape(self.grapes, save_file_path)
         print("저장됨")
 
     def apply_video_filter(self):
@@ -507,7 +513,9 @@ class YTVHApp(tk.Tk):
         tk.Label(frame, text="✅ 프로그램 실행창!", font=("Arial", 16), fg="green").pack(pady=10)
 
         # 오른쪽 위 저장 버튼
-        tk.Button(frame, text="💾 저장하기", command=self.save_action).pack(side="right", padx=10, pady=10)
+        tk.Button(frame, text="💾 JSON 파일로 분석 데이터 저장하기", command=self.save_action).pack(padx=10, pady=10)
+        tk.Button(frame, text="💾 통계 그래프 사진으로 저장하기", command=self.save_action2).pack(padx=10, pady=10)
+        
         # 중앙 버튼들
         tk.Button(frame, text="1. 통계 보기", width=20, height=2,
                   command=lambda: self.show_page(self.current_page, 1)).pack(pady=10)
@@ -538,7 +546,8 @@ class YTVHApp(tk.Tk):
 
         # 각 통계 버튼을 왼쪽 필터 프레임에 배치
         tk.Button(stats_filter_frame, text="채널 통계 보기", command=self.show_text).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("category_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="카테고리별 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)

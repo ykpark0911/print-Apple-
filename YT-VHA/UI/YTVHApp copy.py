@@ -12,7 +12,7 @@ from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 �
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
-from save_file import save_all_data_to_file
+from save_file import save_all_data_to_json_file
 from grape import make_grapes
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tool import dateTime_iso8601_to_dateTime
@@ -300,7 +300,7 @@ class YTVHApp(tk.Tk):
             filetypes = [("JSON files", "*.json"), ("All files", "*.*")],
             title = "저장할 위치 선택"
             )
-        save_all_data_to_file(self.statistics, self.sub_list, self.liked_video_info_list, self.video_info_list, save_file_path)
+        save_all_data_to_json_file(self.statistics, self.sub_list, self.liked_video_info_list, self.video_info_list, save_file_path)
         print("저장됨")
 
     def apply_video_filter(self):
