@@ -15,9 +15,9 @@ def draw_pie_chart(count1, count2, sort):
 def plot_hour_distribution(hours, counts):
     fig, ax = plt.subplots(figsize=(10, 4))
     ax.bar(hours, counts, color='skyblue')
-    ax.set_xlabel("Watching Time (h)")
-    ax.set_ylabel("Number of video views")
-    ax.set_title("Viewing distribution by time zone")
+    ax.set_xlabel("시간")
+    ax.set_ylabel("시청 횟수")
+    ax.set_title("시간별 시청 횟수 분포")
     ax.set_xticks(hours)
     ax.grid(axis='y', linestyle='--', alpha=0.7)
 
@@ -26,9 +26,8 @@ def plot_hour_distribution(hours, counts):
 def plot_date_distribution(dates, counts, title_suffix):
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.plot(dates, counts, marker='o', linestyle='-', color='green')
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Number of videos watched")
-    ax.set_title(f"Distribution of videos viewed by {title_suffix}")
+    ax.set_ylabel("시청 횟수")
+    ax.set_title(f"\"{title_suffix}\" 기준으로 한 날짜별 시청 횟수")
     plt.xticks(rotation=45)
     ax.grid(True, linestyle='--', alpha=0.7)
     
@@ -45,9 +44,9 @@ def plot_category_distribution(categories, counts):
     """
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.bar(categories, counts, color='orchid')
-    ax.set_xlabel("Category")
-    ax.set_ylabel("Number of videos watched")
-    ax.set_title("Distribution of videos viewed by category")
+    ax.set_xlabel("카테고리")
+    ax.set_ylabel("시청 횟수")
+    ax.set_title("카테고리 별 시청 횟수")
     plt.xticks(rotation=45, ha='right')
     ax.grid(axis='y', linestyle='--', alpha=0.7)
 
@@ -63,33 +62,33 @@ def make_grapes(statistics):
 
     # 일간 분포
     day_date_distribution_dict = statistics["day_date_distribution"]
-    include_shorts_day_date_distribution_grape = plot_date_distribution(day_date_distribution_dict["include_shorts"]["day_dates"], day_date_distribution_dict["include_shorts"]["counts"], "day")
-    not_shorts_day_date_distribution_grape = plot_date_distribution(day_date_distribution_dict["not_shorts"]["day_dates"], day_date_distribution_dict["not_shorts"]["counts"], "day")
+    include_shorts_day_date_distribution_grape = plot_date_distribution(day_date_distribution_dict["include_shorts"]["day_dates"], day_date_distribution_dict["include_shorts"]["counts"], "일")
+    not_shorts_day_date_distribution_grape = plot_date_distribution(day_date_distribution_dict["not_shorts"]["day_dates"], day_date_distribution_dict["not_shorts"]["counts"], "일")
 
     # 주간 분포
     week_date_distribution_dict = statistics["week_date_distribution"]
-    include_shorts_week_date_distribution_grape = plot_date_distribution(week_date_distribution_dict["include_shorts"]["week_dates"], week_date_distribution_dict["include_shorts"]["counts"], "week")
-    not_shorts_week_date_distribution_grape = plot_date_distribution(week_date_distribution_dict["not_shorts"]["week_dates"], week_date_distribution_dict["not_shorts"]["counts"], "week")
+    include_shorts_week_date_distribution_grape = plot_date_distribution(week_date_distribution_dict["include_shorts"]["week_dates"], week_date_distribution_dict["include_shorts"]["counts"], "주")
+    not_shorts_week_date_distribution_grape = plot_date_distribution(week_date_distribution_dict["not_shorts"]["week_dates"], week_date_distribution_dict["not_shorts"]["counts"], "주")
 
     # 월간 분포
     month_date_distribution_dict = statistics["month_date_distribution"]
-    include_shorts_month_date_distribution_grape = plot_date_distribution(month_date_distribution_dict["include_shorts"]["month_dates"], month_date_distribution_dict["include_shorts"]["counts"], "month")
-    not_shorts_month_date_distribution_grape = plot_date_distribution(month_date_distribution_dict["not_shorts"]["month_dates"], month_date_distribution_dict["not_shorts"]["counts"], "month")
+    include_shorts_month_date_distribution_grape = plot_date_distribution(month_date_distribution_dict["include_shorts"]["month_dates"], month_date_distribution_dict["include_shorts"]["counts"], "달")
+    not_shorts_month_date_distribution_grape = plot_date_distribution(month_date_distribution_dict["not_shorts"]["month_dates"], month_date_distribution_dict["not_shorts"]["counts"], "달")
 
     # 평균 주간 분포
     average_week_date_distribution_dict = statistics["average_week_date_distribution"]
-    include_shorts_average_week_date_distribution_grape = plot_date_distribution(average_week_date_distribution_dict["include_shorts"]["average_week_dates"], average_week_date_distribution_dict["include_shorts"]["counts"], "week (avg)")
-    not_shorts_average_week_date_distribution_grape = plot_date_distribution(average_week_date_distribution_dict["not_shorts"]["average_week_dates"], average_week_date_distribution_dict["not_shorts"]["counts"], "week (avg)")
+    include_shorts_average_week_date_distribution_grape = plot_date_distribution(average_week_date_distribution_dict["include_shorts"]["average_week_dates"], average_week_date_distribution_dict["include_shorts"]["counts"], "주(평균)")
+    not_shorts_average_week_date_distribution_grape = plot_date_distribution(average_week_date_distribution_dict["not_shorts"]["average_week_dates"], average_week_date_distribution_dict["not_shorts"]["counts"], "주(평균)")
 
     # 평균 월간 분포
     average_month_date_distribution_dict = statistics["average_month_date_distribution"]
-    include_shorts_average_month_date_distribution_grape = plot_date_distribution(average_month_date_distribution_dict["include_shorts"]["average_month_dates"], average_month_date_distribution_dict["include_shorts"]["counts"], "month (avg)")
-    not_shorts_average_month_date_distribution_grape = plot_date_distribution(average_month_date_distribution_dict["not_shorts"]["average_month_dates"], average_month_date_distribution_dict["not_shorts"]["counts"], "month (avg)")
+    include_shorts_average_month_date_distribution_grape = plot_date_distribution(average_month_date_distribution_dict["include_shorts"]["average_month_dates"], average_month_date_distribution_dict["include_shorts"]["counts"], "달(평균)")
+    not_shorts_average_month_date_distribution_grape = plot_date_distribution(average_month_date_distribution_dict["not_shorts"]["average_month_dates"], average_month_date_distribution_dict["not_shorts"]["counts"], "달(평균)")
 
     # 요일별 분포
     weekDay_date_distribution_dict = statistics["weekDay_date_distribution"]
-    include_shorts_weekDay_date_distribution_grape = plot_date_distribution(weekDay_date_distribution_dict["include_shorts"]["weekDay_dates"], weekDay_date_distribution_dict["include_shorts"]["counts"], "weekDay")
-    not_shorts_weekDay_date_distribution_grape = plot_date_distribution(weekDay_date_distribution_dict["not_shorts"]["weekDay_dates"], weekDay_date_distribution_dict["not_shorts"]["counts"], "weekDay")
+    include_shorts_weekDay_date_distribution_grape = plot_date_distribution(weekDay_date_distribution_dict["include_shorts"]["weekDay_dates"], weekDay_date_distribution_dict["include_shorts"]["counts"], "요일")
+    not_shorts_weekDay_date_distribution_grape = plot_date_distribution(weekDay_date_distribution_dict["not_shorts"]["weekDay_dates"], weekDay_date_distribution_dict["not_shorts"]["counts"], "요일")
 
     category_distribution_dict = statistics["category_distribution"]
     category_distribution_grape = plot_category_distribution(category_distribution_dict["categories"], category_distribution_dict["counts"])

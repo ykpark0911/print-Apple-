@@ -1,5 +1,6 @@
 from tool import dateTime_iso8601_to_dateTime
 from datetime import datetime
+from random import shuffle
 
 # 쇼츠 영상 제외 하는 필터 함수
 # takeout: takeout 파일(리스트)
@@ -98,3 +99,16 @@ def sub_filter(video_info_list):
             filtered_video_info_list.append(item)
 
     return filtered_video_info_list
+
+
+def sort_filter(video_info_list, stand):
+    sorted_video_info_list = video_info_list
+    
+    if stand == "최신순":
+        pass
+    elif stand == "오래된 순":
+        sorted_video_info_list.reverse()
+    else : #stand == "랜덤":
+        shuffle(sorted_video_info_list)
+
+    return sorted_video_info_list

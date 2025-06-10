@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import requests
 from PIL import Image, ImageTk
 from io import BytesIO
@@ -21,7 +22,6 @@ import matplotlib.pyplot as plt
 plt.rc('font', family='Malgun Gothic')
 
 
-
 class YTVHApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -33,7 +33,7 @@ class YTVHApp(tk.Tk):
         self.video_info_list = []
         self.sub_list= []
         self.liked_video_info_list = []
-        
+                
         # 필터링 관련 변수 초기화
         self.subscribed_only_var = tk.BooleanVar(value=False)
         self.selected_date_entry = None
@@ -42,6 +42,9 @@ class YTVHApp(tk.Tk):
         self.selected_platform_var = tk.StringVar(value="YouTube")
         self.selected_channel_var = tk.StringVar(value="<전체>") # 좋아요 영상 필터용
         self.selected_video_sort_var = tk.StringVar(value="<전체>")
+        self.include_shorts = tk.StringVar(value= "not_shorts")
+        self.current_grape = None
+        self.sort_options = ["최신순", "오래된 순", "랜덤"]
 
         # **모든 run 페이지에서 공통으로 사용될 비디오 표시 및 페이지네이션 위젯 초기화**
         # 이 위젯들은 나중에 create_run_page2, create_run_page3에 인자로 전달하거나,
@@ -188,17 +191,18 @@ class YTVHApp(tk.Tk):
             # 페이지네이션 초기화 및 첫 페이지 로드
             self.current_video_page = 0
     
-    def show_grape(self, grape_sort, parent_frame, include_short_or_not_key=False):
+    def show_grape(self, grape_sort, parent_frame):
+        self.current_grape = grape_sort
         if self.stats_text_widget and self.stats_text_widget.winfo_ismapped():
             self.stats_text_widget.pack_forget()
         if hasattr(self, "canvas"):
             self.canvas.get_tk_widget().destroy()
 
 
-        if include_short_or_not_key:
-            grape = self.grapes[grape_sort][include_short_or_not_key]
-        else:
+        if grape_sort in ["shorts_distribution", "hour_distribution"]:
             grape = self.grapes[grape_sort]
+        else:     
+            grape = self.grapes[grape_sort][self.include_shorts.get()]
 
         self.canvas = FigureCanvasTkAgg(grape, master=parent_frame)
         self.canvas.draw()
@@ -294,6 +298,9 @@ class YTVHApp(tk.Tk):
         # ... (기존 apply_video_filter 함수 코드) ...
         # (생략: 기존 apply_video_filter 함수 내용은 그대로 두시면 됩니다.)
         self.total_filtered_videos = list(self.video_info_list) 
+        
+        # 정렬
+        self.total_filtered_videos = sort_filter(self.total_filtered_videos, self.sort_combobox.get())
 
         if self.subscribed_only_var.get():
             self.total_filtered_videos = sub_filter(self.total_filtered_videos)
@@ -525,15 +532,22 @@ class YTVHApp(tk.Tk):
         stats_filter_frame.pack_propagate(False) # 프레임 크기가 내용에 따라 늘어나지 않도록 고정
 
         tk.Label(stats_filter_frame, text="통계 종류", font=("Arial", 12, "bold")).pack(pady=10)
+        
+        tk.Radiobutton(stats_filter_frame, text= "쇼츠 영상 포함", variable= self.include_shorts, value="include_shorts", command= lambda: self.show_grape(self.current_grape, self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Radiobutton(stats_filter_frame, text= "쇼츠 영상 제외", variable= self.include_shorts, value="not_shorts", command= lambda: self.show_grape(self.current_grape, self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
 
         # 각 통계 버튼을 왼쪽 필터 프레임에 배치
         tk.Button(stats_filter_frame, text="채널 통계 보기", command=self.show_text).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 달", command=lambda: self.show_grape("month_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 요일", command=lambda: self.show_grape("weekDay_date_distribution", self.graph_display_frame, "not_shorts")).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 달", command=lambda: self.show_grape("month_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="날짜별 영상 개수: 요일", command=lambda: self.show_grape("weekDay_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="하루 평균 날짜별 영상 개수: 주", command=lambda: self.show_grape("average_week_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="하루 평균 날짜별 영상 개수: 달", command=lambda: self.show_grape("average_month_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+
+
 
 
         # --- 오른쪽 컬럼: 그래프 표시 영역 ---
@@ -559,6 +573,16 @@ class YTVHApp(tk.Tk):
 
         # --- 왼쪽 컬럼: 필터링 옵션 ---
         tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # 정렬 기준
+        tk.Label(filter_frame, text="정렬 기준:").pack(anchor="w", padx=5, pady=(10, 2))
+        self.sort_combobox = ttk.Combobox(
+            filter_frame,
+            values=self.sort_options,
+            state="readonly"
+        )
+        self.sort_combobox.set(self.sort_options[0]) # '최신순'으로 초기 설정
+        self.sort_combobox.pack(fill="x", padx=5, pady=5)
 
         # 1. 구독한 채널 필터 (체크박스)
         tk.Checkbutton(filter_frame, text="구독한 채널만 보기", variable=self.subscribed_only_var).pack(anchor="w", padx=5, pady=2)
@@ -626,6 +650,16 @@ class YTVHApp(tk.Tk):
 
         # --- 왼쪽 컬럼: 필터링 옵션 ---
         tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # 정렬 기준
+        tk.Label(filter_frame, text="정렬 기준:").pack(anchor="w", padx=5, pady=(10, 2))
+        self.sort_combobox = ttk.Combobox(
+            filter_frame,
+            values=self.sort_options,
+            state="readonly"
+        )
+        self.sort_combobox.set(self.sort_options[0]) # '최신순'으로 초기 설정
+        self.sort_combobox.pack(fill="x", padx=5, pady=5)
 
         tk.Label(filter_frame, text="채널 선택:").pack(anchor="w", padx=5, pady=2)
         for channel_name in self.sub_list:
