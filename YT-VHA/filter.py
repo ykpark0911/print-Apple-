@@ -4,7 +4,7 @@ from random import shuffle
 
 # 쇼츠 영상 제외 하는 필터 함수
 # takeout: takeout 파일(리스트)
-def not_short_filter(takeout):
+def not_shorts_filter(takeout):
     not_short_takeout= []
     
     for i in range(len(takeout) - 1):
@@ -22,7 +22,8 @@ def not_short_filter(takeout):
             if time_diffrence_sec1 > 60:
                 not_short_takeout.append(takeout[i])
         else:         
-            # before_data = now_data 바로 다음에 보았던 영상 (i == 1일 때는 영상의 경우에는 없으니까 스킵함)
+            # before_data = now_data 바로 다음에 보았던 영상
+            # i == 1일 때는 영상의 경우에는 없으니까 스킵함
             next_data = dateTime_iso8601_to_dateTime(takeout[i-1]["time"])
             # 다음 영상 - 현재 영상의  영상의 시간차
             time_diffrence_sec2 = (next_data- now_data).total_seconds()

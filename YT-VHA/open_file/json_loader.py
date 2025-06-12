@@ -2,10 +2,13 @@ import json
 from open_file.extract_video_ids import is_id
 
 def load_takeout_file(load_takeout_file_path):
-    with open(load_takeout_file_path, "r", encoding="utf-8") as f: #with 문 안에 있는 코드 실행 후, 자동으로 파일 닫아준다.
+    with open(load_takeout_file_path, "r", encoding="utf-8") as f:
         data = json.load(f) #load()는 파이썬의 리스트나 딕셔너리 자료형으로 바꿔준다.
     
+    # 오류 영상을 제외한 일반적인 영상을 담을 리스트
     filtered_data = []
+
+    # 오류 영상: "최초공개 영상", "유튜브 광고", "비공개 영상", "삭제 영상"
     for item in data:
         if (
         "titleUrl" in item and

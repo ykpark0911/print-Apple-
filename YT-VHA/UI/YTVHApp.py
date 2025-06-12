@@ -6,10 +6,10 @@ from io import BytesIO
 from tkinter.filedialog import askopenfilename, asksaveasfilename, askdirectory
 import webbrowser
 from yt_api.get_yt_ob import tester_login, guest_login
-from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
-from open_file.get_sub_list import get_sub_list
+from open_file.extract_video_ids import extract_video_ids # 영상 id 뽑아내는 함수
+from open_file.get_sub_list import load_sub_file
 from open_file.json_loader import load_takeout_file, load_save_file # takeout 파일 여는 함수 
-from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 함수
+from yt_api.get_video_info import call_video_info # 영상 정보 호출하는 함수
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
@@ -397,6 +397,7 @@ class YTVHApp(tk.Tk):
     def teste_user_login(self):
         self.youtube = tester_login()
         self.authority = "tester"
+
         # 좋아요한 영상 정보
         self.liked_video_info_list = extract_video_info_from_liked_playlist(self.youtube)
         self.next_page()
@@ -433,36 +434,37 @@ class YTVHApp(tk.Tk):
             print("파일 오류")
 
     def file_loading(self):
-        # 파일 경로 받기
+        # 1. 분석할 파일 경로 얻기
+        # takeout.json 파일 경로
         takeout_file_path = askopenfilename(
             title="테이크아웃 파일 선택",
             filetypes=[("JSON files", "*.json")]
         )
+        # 구독정보.csv 파일 경로
         sub_linfo_file_path = takeout_file_path[:-16] + "구독정보\\구독정보.csv"
     
-        # json 파일 리스트로 변환
+        # 2. 분석할  파일 열기
+        # takeout.json 파일 열기
         self.takeout = load_takeout_file(takeout_file_path)
-        # 쇼츠 영상 제외
-        self.not_shorts_takeout = not_short_filter(self.takeout)
-        print("테이크 아웃 파일 불러오기 완료")
-        # 구독자 정보 얻기
-        self.sub_list = get_sub_list(sub_linfo_file_path)
+        
+        # 구독정보.csv 파일 열기
+        self.sub_list = load_sub_file(sub_linfo_file_path)
         self.sub_list.append("<전체>")
 
-        # 영상 id 추출(쇼츠 제외만)
-        video_ids = extract_video_ids_from_watch_history(self.not_shorts_takeout)
-        print("아이디 추출 완료")
+        # 3. 쇼츠 영상 제외
+        self.not_shorts_takeout = not_shorts_filter(self.takeout)
 
-        # 영상 정보 호출(쇼츠 제외만)
-        self.video_info_list = get_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
-        print("영상 정보 호출 완료")
+        # 4. 영상 id 추출(쇼츠 제외만)
+        video_ids = extract_video_ids(self.not_shorts_takeout)
 
-        # 통계 자료 얻기
+        # 5. 영상 정보 호출(쇼츠 제외만)
+        self.video_info_list = call_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
+
+        # 6 통계 자료 얻기
         self.statistics = make_statistics(self.takeout, self.not_shorts_takeout, self.video_info_list, self.liked_video_info_list)
         self.text_content = make_text(self.statistics)
 
-
-        # 그래프 얻기
+        # 7. 그래프 얻기
         self.grapes = make_grapes(self.statistics)
 
         # 디버깅 용
@@ -546,8 +548,8 @@ class YTVHApp(tk.Tk):
 
         # 각 통계 버튼을 왼쪽 필터 프레임에 배치
         tk.Button(stats_filter_frame, text="채널 통계 보기", command=self.show_text).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("category_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
-        tk.Button(stats_filter_frame, text="카테고리별 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="쇼츠 비율", command=lambda: self.show_grape("shorts_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
+        tk.Button(stats_filter_frame, text="카테고리별 비율", command=lambda: self.show_grape("category_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="시간 비율", command=lambda: self.show_grape("hour_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="날짜별 영상 개수: 일", command=lambda: self.show_grape("day_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)
         tk.Button(stats_filter_frame, text="날짜별 영상 개수: 주", command=lambda: self.show_grape("week_date_distribution", self.graph_display_frame)).pack(fill="x", padx=5, pady=5)

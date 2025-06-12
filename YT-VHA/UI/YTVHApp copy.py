@@ -5,10 +5,10 @@ from io import BytesIO
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 import webbrowser
 from yt_api.get_yt_ob import tester_login, guest_login
-from open_file.extract_video_ids import extract_video_ids_from_watch_history # 영상 id 뽑아내는 함수
-from open_file.get_sub_list import get_sub_list
+from open_file.extract_video_ids import extract_video_ids # 영상 id 뽑아내는 함수
+from open_file.get_sub_list import load_sub_file
 from open_file.json_loader import load_takeout_file, load_save_file # takeout 파일 여는 함수 
-from yt_api.get_video_info import get_video_info # 영상 정보 호출하는 함수
+from yt_api.get_video_info import call_video_info # 영상 정보 호출하는 함수
 from yt_api.get_liked_video_info import extract_video_info_from_liked_playlist
 from filter import * # 쇼츠 영상 제외 시키는 필터 함수 
 from video_statistics import make_statistics
@@ -442,18 +442,18 @@ class YTVHApp(tk.Tk):
         # json 파일 리스트로 변환
         self.takeout = load_takeout_file(takeout_file_path)
         # 쇼츠 영상 제외
-        self.not_shorts_takeout = not_short_filter(self.takeout)
+        self.not_shorts_takeout = not_shorts_filter(self.takeout)
         print("테이크 아웃 파일 불러오기 완료")
         # 구독자 정보 얻기
-        self.sub_list = get_sub_list(sub_linfo_file_path)
+        self.sub_list = load_sub_file(sub_linfo_file_path)
         self.sub_list.append("<전체>")
 
         # 영상 id 추출(쇼츠 제외만)
-        video_ids = extract_video_ids_from_watch_history(self.not_shorts_takeout)
+        video_ids = extract_video_ids(self.not_shorts_takeout)
         print("아이디 추출 완료")
 
         # 영상 정보 호출(쇼츠 제외만)
-        self.video_info_list = get_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
+        self.video_info_list = call_video_info(self.youtube, video_ids, self.not_shorts_takeout, self.sub_list)
         print("영상 정보 호출 완료")
 
         # 통계 자료 얻기

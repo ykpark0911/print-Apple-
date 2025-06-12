@@ -7,7 +7,7 @@ from tool import duration_iso8601_to_seconds, get_categoryId, is_short, is_sub
 # youtube: 유튜브 객체
 # video_ids: 호출할 영상 id 목록(list)
 # takeout: takeout 파일(리스트)
-def get_video_info(youtube, video_ids, takeout, sub_list):
+def call_video_info(youtube, video_ids, takeout, sub_list):
     # 추가로 영상 시간을 통해 걸러진 쇼츠 영상 개수, 오류 영상 개수
 
     # 호출한 영상 정보를 담는 리스트
@@ -56,73 +56,66 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
             "items": [
                 {
                 "kind": "youtube#video",
-                .
-                .
-                .
+                "id": "abc123",
+                "snippet": {
+                    "title": "파이썬 강의",
+                    "channelTitle": "코딩하는 정대리",
+                    "categoryId": "10",
+                    "publishedAt": "2023-03-20T12:00:00Z",
+                    "thumbnails": {
+                        "default": {
+                        "url": "https://i.ytimg.com/vi/abc123/default.jpg",
+                        "width": 120,
+                        "height": 90
+                        },
+                        "high": {
+                        "url": "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
+                        "width": 480,
+                        "height": 360
+                        }
+                    }
                 },
+                "contentDetails": {
+                    "duration": "PT5M12S",
+                    "dimension": "2d",
+                    "definition": "hd"
+                }
 
                 {
                 .
                 .
                 .
-                }
-
+                },
+                .
+                .
+                .
             ]
+        }
         '''
 
         # 응답 받은 영상 정보를 딕셔너리{id1 : item1, id2 : item2,...}형태로 저장
         response_dict = {}
-        # item: 응답 받은 영상의 정보(dict)를 꺼냄 예)
-        '''
-        {
-            "kind": "youtube#video",
-            "id": "abc123",
-            "snippet": {
-                "title": "파이썬 강의",
-                "channelTitle": "코딩하는 정대리",
-                "categoryId": "10",
-                "publishedAt": "2023-03-20T12:00:00Z",
-                "thumbnails": {
-                    "default": {
-                    "url": "https://i.ytimg.com/vi/abc123/default.jpg",
-                    "width": 120,
-                    "height": 90
-                    },
-                    "high": {
-                    "url": "https://i.ytimg.com/vi/abc123/hqdefault.jpg",
-                    "width": 480,
-                    "height": 360
-                    }
-                }
-            },
-            "contentDetails": {
-                "duration": "PT5M12S",
-                "dimension": "2d",
-                "definition": "hd"
-            }
-        }
-        '''
-        
+        # item: 응답 받은 영상의 정보(dict)를 꺼냄 예)       
         for item in response["items"]:
             response_dict[item["id"]] = item
 
         # 응답 받은 영상들을 저장하기 위해 순회
         # j: cunk에서 영상의 인덱스(int)를 꺼냄
         # i + j: 영상의 인덱스
-        # id: 청크 영상 id(str)를 꺼냄 예) "Ffwfdfa123"
+        # id: 청크 영상 id(str)를 꺼냄. 예) "Ffwfdfa123"
         for j, id in enumerate(chunk_id):
+            
+            # 응답 받은 영상의 정보 (= item)
+            info = response_dict[id]
             
             # 청크 영상 id가 응답 받은 영상 id 목록에 없다면 오류 영상으로 판단
             if id not in response_dict:
                 print(f"{i + j}번째 영상은 응답 없음 → 제거 대상")
                 del_list.append(i + j)
                 continue
-            
-            # 응답 받은 영상의 정보 (= item)
-            info = response_dict[id]
 
-            # 영상이 "shorts" 쇼츠 영상으로 판단
-            if is_short(info) == "short":
+            # 영상이 60초보다 짧다면, 쇼츠 영상으로 판단
+            if is_short(info) == "shorts":
                 duration_sec = duration_iso8601_to_seconds(info["contentDetails"]["duration"])
                 print(f"{i + j}번째인 {info["snippet"]["title"]} 영상은 {duration_sec}초로 쇼츠로 판별됨 → 제거 대상")
                 del_list.append(i + j)
@@ -156,13 +149,28 @@ def get_video_info(youtube, video_ids, takeout, sub_list):
         del takeout[d]
 
     return video_info_list
+
 '''
-{'id': 'bc3DJ2Up8j8',
-'title': '일본 교토에서 부부즈케를 주는 이유',
-'category': '22',
-'channel': '와사비',
-'thumbnails': {'url': 'https://i.ytimg.com/vi/bc3DJ2Up8j8/hqdefault.jpg', 'width': 480, 'height': 360},
-'durationSec': 17.0,
-'isShort': 'short',
-'dateTime': datetime.datetime(2025, 5, 13, 10, 10, 0, 142000, tzinfo=datetime.timezone.utc)}]
+[
+    {
+        'id': '7_noln0rxFY',
+        'title': '기타 공연 중 가장 위태로운 공연',
+        'category': 'Comedy',
+        'sub': 'notSub',
+        'channel': '기타류',
+        'thumbnails': {'url': 'https://i.ytimg.com/vi/7_noln0rxFY/hqdefault.jpg', 'width': 480, 'height': 360},
+        'duration': 'PT40S',
+        'dateTime': '2025-02-27T23:52:51.498Z',
+        'platform': 'YouTube',
+        'video_url': 'https://www.youtube.com/watch?v=7_noln0rxFY'
+    },
+    {
+        .
+        .
+        .
+    }
+    .
+    .
+    .
+]
 '''

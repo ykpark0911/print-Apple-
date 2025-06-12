@@ -1,12 +1,15 @@
 import pandas as pd #pip install pandas
 
 
-def get_sub_list(csv_path):
+def load_sub_file(csv_path):
     data = pd.read_csv(csv_path, encoding='utf-8-sig')
 
-    sub_list = []
+    # .to_dict: csv를 딕셔너리로 불러옴
+    # orient = 'records': 각 행 기준
+    sub_info_list = data.to_dict(orient='records')
 
-    sub_info_list = data.to_dict(orient='records') #orient 옵션에서 'records'는 각 행을 딕셔너리로, 전체는 리스트로 저장
+    # 구독한 채널 이름 목록을 담을 리스트
+    sub_list = []
 
     for channel in sub_info_list:
         name = channel.get('채널 제목')
@@ -16,5 +19,5 @@ def get_sub_list(csv_path):
 
 
 '''
-["채널1", "채널2", "채널3"]
+["달이쌤", "Cobblemon", "마소의 마크일기"]
 '''
