@@ -3,11 +3,11 @@
 import re
 
 # takeout 파일에 모든 영상 아이디 추출하는 함수
-def extract_video_ids(video_list):
+def extract_video_ids(takeout):
     # 영상 id 목록 담을 리스트
     video_ids = []
 
-    for item in video_list:
+    for item in takeout:
         # 영상 1개 id 추출
         match = is_id(item)
         if match:

@@ -104,15 +104,15 @@ def call_video_info(youtube, video_ids, takeout, sub_list):
         # i + j: 영상의 인덱스
         # id: 청크 영상 id(str)를 꺼냄. 예) "Ffwfdfa123"
         for j, id in enumerate(chunk_id):
-            
-            # 응답 받은 영상의 정보 (= item)
-            info = response_dict[id]
-            
+                       
             # 청크 영상 id가 응답 받은 영상 id 목록에 없다면 오류 영상으로 판단
             if id not in response_dict:
                 print(f"{i + j}번째 영상은 응답 없음 → 제거 대상")
                 del_list.append(i + j)
                 continue
+
+            # 응답 받은 영상의 정보 (= item)
+            info = response_dict[id]
 
             # 영상이 60초보다 짧다면, 쇼츠 영상으로 판단
             if is_short(info) == "shorts":
