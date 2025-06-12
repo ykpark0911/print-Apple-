@@ -581,10 +581,10 @@ class YTVHApp(tk.Tk):
         video_display_container_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10) # 남은 공간을 모두 채우고 확장 가능하게
 
         # --- 왼쪽 컬럼: 필터링 옵션 ---
-        tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
+        tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=5)
 
         # 정렬 기준
-        tk.Label(filter_frame, text="정렬 기준:").pack(anchor="w", padx=5, pady=(10, 2))
+        tk.Label(filter_frame, text="정렬 기준:").pack(anchor="w", padx=5, pady=(5, 2))
         self.sort_combobox = ttk.Combobox(
             filter_frame,
             values=self.sort_options,
@@ -597,12 +597,12 @@ class YTVHApp(tk.Tk):
         tk.Checkbutton(filter_frame, text="구독한 채널만 보기", variable=self.subscribed_only_var).pack(anchor="w", padx=5, pady=2)
         
         # 2. 선택한 날짜 필터 (입력 필드)
-        tk.Label(filter_frame, text="날짜 선택 (YYYY-MM-DD):").pack(anchor="w", padx=5, pady=2)
+        tk.Label(filter_frame, text="날짜 선택 (YYYY-MM-DD):").pack(anchor="w", padx=5, pady=1)
         self.selected_date_entry = tk.Entry(filter_frame)
         self.selected_date_entry.pack(fill="x", padx=5, pady=2)
 
         # 3. 선택한 채널 필터 (입력 필드)
-        tk.Label(filter_frame, text="채널 이름 입력:").pack(anchor="w", padx=5, pady=2)
+        tk.Label(filter_frame, text="채널 이름 입력:").pack(anchor="w", padx=5, pady=1)
         self.selected_channel_entry = tk.Entry(filter_frame)
         self.selected_channel_entry.pack(fill="x", padx=5, pady=2)
 
@@ -623,21 +623,20 @@ class YTVHApp(tk.Tk):
             "News & Politics",
             "Howto & Style",
             "Education",
-            "Science & Technology",
-            "Nonprofits & Activism"
+            "Science & Technology"
         ]
         for category_name in self.categories:
-            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_name).pack(anchor="w", padx=5, pady=1)
+            tk.Radiobutton(filter_frame, text=category_name, variable=self.selected_category_var, value=category_name).pack(anchor="w", padx=5)
 
         # 5. 플랫폼 필터 (라디오 버튼)
-        tk.Label(filter_frame, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=10)
+        tk.Label(filter_frame, text="플랫폼 선택:").pack(anchor="w", padx=5, pady=5)
 
-        tk.Radiobutton(filter_frame, text="YouTube", variable=self.selected_platform_var, value="YouTube").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(filter_frame, text="YouTube", variable=self.selected_platform_var, value="YouTube").pack(anchor="w", padx=5)
 
-        tk.Radiobutton(filter_frame, text="YouTube Music", variable=self.selected_platform_var, value="YouTube Music").pack(anchor="w", padx=5, pady=2)
+        tk.Radiobutton(filter_frame, text="YouTube Music", variable=self.selected_platform_var, value="YouTube Music").pack(anchor="w", padx=5)
         
         # --- 완료 버튼 (모든 필터 설정을 적용) ---
-        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=15, fill="x")
+        tk.Button(filter_frame, text="필터 적용", command=self.apply_video_filter).pack(anchor="w", padx=5, pady=10, fill="x")
         
         # --- 오른쪽 컬럼: 비디오 표시 영역 및 페이지네이션 컨트롤 ---
         self.create_video_display_widgets(frame, 'run2')
