@@ -1,3 +1,5 @@
+#  ── 그래프 만드는 모듈 ──
+
 import matplotlib.pyplot as plt
 
 def draw_pie_chart(count1, count2, sort):
@@ -35,13 +37,6 @@ def plot_date_distribution(dates, counts, title_suffix):
 
 
 def plot_category_distribution(categories, counts):
-    """
-    카테고리별 시청 분포를 시각화
-
-    Parameters:
-        categories (list): 카테고리 이름 리스트
-        counts (list): 카테고리별 시청 횟수
-    """
     fig, ax = plt.subplots(figsize=(12, 4))
     ax.bar(categories, counts, color='orchid')
     ax.set_xlabel("카테고리")

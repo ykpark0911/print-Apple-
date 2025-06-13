@@ -1,5 +1,6 @@
+#  ── 파일로 저장하는 모듈 ──
+
 import json
-import matplotlib.pyplot as plt
 
 def save_all_data_to_json_file(statistics_dict, sub_list, liked_video_info_list, video_info_list, save_path):
     # 모든 데이터를 담을 하나의 딕셔너리 생성
@@ -12,7 +13,7 @@ def save_all_data_to_json_file(statistics_dict, sub_list, liked_video_info_list,
 
     with open(save_path, "w", encoding="utf-8") as f:
         json.dump(all_data, f, indent=2, ensure_ascii=False)
-    print("✅ 모든 데이터 저장 완료:", save_path)
+    print("모든 데이터 저장 완료:", save_path)
 
 
 def save_grape(save_path, grape_data, grape_name):
@@ -36,4 +37,4 @@ def save_all_grape(grapes, save_path):
             graph_name = key # 그래프 파일명 등에 사용할 이름
             save_grape(save_path, graph_data, graph_name)
 
-    print("✅ 모든 데이터 저장 완료:", save_path)
+    print("모든 데이터 저장 완료:", save_path)

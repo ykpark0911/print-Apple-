@@ -1,6 +1,9 @@
+#  ── 구독정보.csv 파일 여는 모듈 ──
+
 import pandas as pd #pip install pandas
 
 
+# 구독정보 파일 여는 함수
 def load_sub_file(csv_path):
     data = pd.read_csv(csv_path, encoding='utf-8-sig')
 

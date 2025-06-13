@@ -1,4 +1,4 @@
-# ── Google OAuth 2.0 인증을 통해 YouTube API 사용 권한을 얻기 위한 모듈 ──
+# ── Google OAuth 2.0 인증을 통해 YouTube API 사용 권한을 얻는 모듈 ──
 import os
 from google_auth_oauthlib.flow import InstalledAppFlow  # 사용자 OAuth 2.0 인증 처리 클래스
 from googleapiclient.discovery import build             # API 요청을 위한 서비스 객체 생성 함수

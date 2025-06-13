@@ -1,7 +1,7 @@
 #  ── 기타 분석용 모듈 ──
 
 import isodate
-from dateutil import parser #pip install python-dateutil
+from dateutil import parser
 
 
 # 카테고리 번호를 통해 카테고리 얻는 함수

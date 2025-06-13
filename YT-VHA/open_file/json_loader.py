@@ -1,6 +1,10 @@
+#  ── takeout.json 파일 여는 모듈 ──
+
 import json
 from open_file.extract_video_ids import is_id
 
+
+# takeout 파일 여는 함수
 def load_takeout_file(load_takeout_file_path):
     with open(load_takeout_file_path, "r", encoding="utf-8") as f:
         data = json.load(f) #load()는 파이썬의 리스트나 딕셔너리 자료형으로 바꿔준다.

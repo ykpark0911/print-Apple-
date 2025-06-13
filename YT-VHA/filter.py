@@ -1,3 +1,5 @@
+#  ── 영상 필터링 하는 모듈 ──
+
 from tool import dateTime_iso8601_to_dateTime
 from datetime import datetime
 from random import shuffle
