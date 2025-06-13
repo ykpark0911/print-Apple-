@@ -24,7 +24,7 @@ def get_categoryId(categoryId):
     "28": "Science & Technology",
     "29": "Nonprofits & Activism"
 }
-    category= category_id_map.get(categoryId)
+    category= category_id_map.get(categoryId, "Unknown")
 
     return category
 

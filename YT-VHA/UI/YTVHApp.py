@@ -661,13 +661,6 @@ class YTVHApp(tk.Tk):
         # --- 왼쪽 컬럼: 필터링 옵션 ---
         tk.Label(filter_frame, text="필터링 옵션", font=("Arial", 12, "bold")).pack(pady=10)
 
-        # 정렬 기준
-        tk.Label(filter_frame, text="정렬 기준:").pack(anchor="w", padx=5, pady=(10, 2))
-        self.sort_combobox = ttk.Combobox(
-            filter_frame,
-            values=self.sort_options,
-            state="readonly"
-        )
         self.sort_combobox.set(self.sort_options[0]) # '최신순'으로 초기 설정
         self.sort_combobox.pack(fill="x", padx=5, pady=5)
 
